@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "688926195004",
+    "project_id": "go2playproject",
+    "storage_bucket": "go2playproject.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:688926195004:android:d923ca3394b1aaaf53b239",
+        "android_client_info": {
+          "package_name": "com.example.go2playproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhGNLI5Uvna4ut9BR0S_Bv3lhFhWQ3LUo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
