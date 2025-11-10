@@ -1,5 +1,6 @@
 package com.example.go2playproject
 
+import android.annotation.SuppressLint
 import androidx.lifecycle.ViewModel
 import com.example.go2playproject.model.Field
 import com.example.go2playproject.model.Group
@@ -62,6 +63,12 @@ class CalcettoViewModel : ViewModel() {
     private val _matchToEdit = MutableStateFlow<Match?>(null)
     val matchToEdit: StateFlow<Match?> = _matchToEdit.asStateFlow()
 
+    private val _fieldAvailability = MutableStateFlow<List<TimeSlotAvailability>>(emptyList())
+    val fieldAvailability: StateFlow<List<TimeSlotAvailability>> = _fieldAvailability
+
+    private val _isLoadingAvailability = MutableStateFlow(false)
+    val isLoadingAvailability: StateFlow<Boolean> = _isLoadingAvailability
+
     init {
         // Avvia il caricamento dei dati all'avvio del ViewModel
         fetchFields()
@@ -73,6 +80,13 @@ class CalcettoViewModel : ViewModel() {
         val field: Field?,
         val players: List<User>,
         val creator: User?
+    )
+
+    data class TimeSlotAvailability(
+        val timeSlot: String,
+        val isAvailable: Boolean,
+        val matchId: String? = null,
+        val isUserMatch: Boolean = false
     )
 
     /**
@@ -96,15 +110,33 @@ class CalcettoViewModel : ViewModel() {
     }
 
     /**
-     * Funzione: separa le partita tra upcoming e archived
+     * Funzione che mi dice la data attuale
      */
-    private fun separateMatches(matches: List<Match>) {
-        val today = Calendar.getInstance().apply {
+    private fun getStartOfDay(date: Date = Date()): Date {
+        return Calendar.getInstance().apply {
+            time = date
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }.time
+    }
+
+    private fun getEndOfDay(date: Date = Date()): Date {
+        return Calendar.getInstance().apply {
+            time = date
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND,59)
+            set(Calendar.MILLISECOND, 999)
+        }.time
+    }
+
+    /**
+     * Funzione: separa le partita tra upcoming e archived
+     */
+    private fun separateMatches(matches: List<Match>) {
+        val today = getStartOfDay()
 
         val upcoming = matches.filter { match ->
             !match.isCompleted && match.date.after(today)
@@ -252,7 +284,7 @@ class CalcettoViewModel : ViewModel() {
 
                         // Filtra ulteriormente i risultati per query parziali
                         val filteredUsers = allUsers.filter { user ->
-                            user.name.contains(query, ignoreCase = true)
+                            user.name.contains(query, ignoreCase = true) ||
                             user.email.contains(query, ignoreCase = true)
                         }
                         _userSearchResults.value = filteredUsers
@@ -447,30 +479,6 @@ class CalcettoViewModel : ViewModel() {
     }
 
     /**
-     * Funzione: Verifica se una partita ha bisogno di più giocatori
-     */
-    fun checkIfMatchNeedsMorePlayers(matchId: String): Boolean {
-        // Questa funzione potrebbe essere usata per suggerire
-        // di rendere public una partita in caso mancassero giocatori
-        var needsMorePlayers = false
-
-        db.collection("matches").document(matchId)
-            .get()
-            .addOnSuccessListener { document ->
-                val match = document.toObject(Match::class.java)
-                if(match != null){
-                    val currentPlayers = match.players.size
-                    val maxPlayers = match.maxPlayers
-                    val minimumPlayersNeed = 8
-
-                    needsMorePlayers = currentPlayers < minimumPlayersNeed
-                }
-            }
-
-        return needsMorePlayers
-    }
-
-    /**
      * Funzione: Recupera tutte le partite disponibili per l'utente
      * Include:
      * - Partite pubbliche a cui l'utente non partecipa ancora
@@ -487,12 +495,7 @@ class CalcettoViewModel : ViewModel() {
                 val userGroups = userDoc.get("groupsId") as? List<String> ?: emptyList()
 
                 // Data di oggi
-                val today = Calendar.getInstance().apply {
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }.time
+                val today = getStartOfDay()
 
                 // Data tra 30 giorni
                 val thirtyDaysFromNow = Calendar.getInstance().apply {
@@ -698,4 +701,135 @@ class CalcettoViewModel : ViewModel() {
             println("Error in updating the match: $e")
         }
     }
+
+    /**
+     * Funzione: Recupera la disponibilità di un campo per una data specifica
+     */
+    fun fetchFieldAvailability(fieldId: String, date: Date) {
+        _isLoadingAvailability.value = true
+
+        val startOfDay = getStartOfDay()
+
+        val endOfDay = getEndOfDay()
+
+        val currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+
+        // Genera tutti gli slot disponibili
+        val allSlots = generateTimeSlots()
+
+        // Recupera le partite prenotate per quel campo in quella data
+        db.collection("matches")
+            .whereEqualTo("fieldId", fieldId)
+            .whereGreaterThanOrEqualTo("date", startOfDay)
+            .whereLessThanOrEqualTo("date", endOfDay)
+            .get()
+            .addOnSuccessListener { documents ->
+                val bookedSlots = documents.mapNotNull { doc ->
+                    val match = doc.toObject(Match::class.java).copy(matchId = doc.id)
+                    match.timeSlot
+                }
+
+                val bookedMatches = documents.associate { doc ->
+                    val match = doc.toObject(Match::class.java).copy(matchId = doc.id)
+                    match.timeSlot to match
+                }
+
+                // Crea la lista di disponibilità
+                val availabilityList = allSlots.map { slot ->
+                    val match = bookedMatches[slot]
+                    TimeSlotAvailability(
+                        timeSlot = slot,
+                        isAvailable = !bookedSlots.contains(slot),
+                        matchId = match?.matchId,
+                        isUserMatch = match?.players?.contains(currentUserId) == true
+                    )
+                }
+
+                _fieldAvailability.value = availabilityList
+                _isLoadingAvailability.value = false
+            }
+            .addOnFailureListener { e ->
+                println("Error fetching field availability: $e")
+                // In caso di errore, mostra tutti gli slot come disponibili
+                _fieldAvailability.value = allSlots.map { slot ->
+                    TimeSlotAvailability(
+                        timeSlot = slot,
+                        isAvailable = true,
+                        matchId = null,
+                        isUserMatch = false
+                    )
+                }
+                _isLoadingAvailability.value = false
+            }
+    }
+
+    /**
+     * Funzione: Genera gli slot orari disponibili per un campo
+     * Da 9:00 alle 22:30 con slot da 1.5 ore
+     */
+    @SuppressLint("DefaultLocale")
+    private fun generateTimeSlots(): List<String> {
+        val slots = mutableListOf<String>()
+        val calendar = Calendar.getInstance()
+
+        // Start from 9:00 AM
+        calendar.set(Calendar.HOUR_OF_DAY, 9)
+        calendar.set(Calendar.MINUTE, 0)
+
+        // Generate slots until 9:00 PM (21:00)
+        while (calendar.get(Calendar.HOUR_OF_DAY) < 21) {
+            val startTime = String.format("%02d:%02d",
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE))
+
+            calendar.add(Calendar.MINUTE, 90) // Add 1.5 hours
+
+            val endTime = String.format("%02d:%02d",
+                calendar.get(Calendar.HOUR_OF_DAY),
+                calendar.get(Calendar.MINUTE))
+
+            slots.add("$startTime - $endTime")
+        }
+
+        return slots
+    }
+
+    /**
+     * Funzione: Verifica se uno slot è disponibile prima di creare una partita
+     */
+    fun checkSlotAvailability(
+        fieldId: String,
+        date: Date,
+        timeSlot: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
+        val startOfDay = getStartOfDay()
+
+        val endOfDay = getEndOfDay()
+
+        db.collection("matches")
+            .whereEqualTo("fieldId", fieldId)
+            .whereGreaterThanOrEqualTo("date", startOfDay)
+            .whereLessThanOrEqualTo("date", endOfDay)
+            .whereEqualTo("timeSlot", timeSlot)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (documents.isEmpty) {
+                    onResult(true, null) // Disponibile
+                } else {
+                    onResult(false, "This time slot is already booked")
+                }
+            }
+            .addOnFailureListener { e ->
+                onResult(false, "Error checking availability: ${e.message}")
+            }
+    }
+
+    /**
+     * Funzione: Pulisce lo stato della disponibilità
+     */
+    fun clearFieldAvailability() {
+        _fieldAvailability.value = emptyList()
+    }
 }
+

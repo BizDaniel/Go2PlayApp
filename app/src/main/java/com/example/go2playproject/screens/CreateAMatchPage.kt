@@ -40,6 +40,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CheckboxDefaults.colors
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -87,6 +88,9 @@ import com.example.go2playproject.CalcettoViewModel
 import com.example.go2playproject.model.Field
 import com.example.go2playproject.model.Group
 import com.google.firebase.auth.FirebaseAuth
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.roundToInt
 
 
@@ -538,31 +542,101 @@ fun CreateButton(
     authViewModel: AuthViewModel,
     navController: NavHostController
 ) {
+    val context = LocalContext.current
+    var isCheckingAvailability by remember { mutableStateOf(false) }
+
     Button(
         onClick = {
             // Ottieni l'ID dell'utente corrente
             val currentUser = authViewModel.auth.currentUser
             currentUser?.let { user ->
-                val matchData = mapOf(
-                    "fieldId" to (selectedField?.fieldId ?: ""),
-                    "creatorId" to user.uid,
-                    "date" to selectedDate, // Convertire in Date se necessario
-                    "timeSlot" to selectedTime,
-                    "players" to listOf(user.uid),
-                    "ispublic" to !isPrivate,
-                    "maxPlayers" to numberOfPlayers,
-                    "groupId" to if (isPrivate) selectedGroup?.groupId else null,
-                    "description" to description,
-                    "level" to level
-                )
-                val safeMatchData = matchData.filterValues { it != null } as Map<String, Any>
-                calcettoViewModel.createMatch(safeMatchData)
-                navController.popBackStack()
+                // Converti la stringa data in Date
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val matchDate = try {
+                    dateFormat.parse(selectedDate) ?: Date()
+                } catch (e: Exception) {
+                    Date()
+                }
+
+                isCheckingAvailability = true
+
+                // Verifica disponibilità prima di creare
+                calcettoViewModel.checkSlotAvailability(
+                    fieldId = selectedField!!.fieldId,
+                    date = matchDate,
+                    timeSlot = selectedTime
+                ) { isAvailable, errorMessage ->
+                    isCheckingAvailability = false
+
+                    if (isAvailable) {
+                        // Slot disponibile, crea la partita
+                        val matchData = mapOf(
+                            "fieldId" to selectedField.fieldId,
+                            "creatorId" to user.uid,
+                            "date" to matchDate,
+                            "timeSlot" to selectedTime,
+                            "players" to listOf(user.uid),
+                            "ispublic" to !isPrivate,
+                            "maxPlayers" to numberOfPlayers,
+                            "groupId" to if (isPrivate) selectedGroup?.groupId else null,
+                            "description" to description,
+                            "level" to level,
+                            "isCompleted" to false
+                        )
+                        val safeMatchData = matchData.filterValues { it != null } as Map<String, Any>
+                        calcettoViewModel.createMatch(safeMatchData)
+
+                        Toast.makeText(
+                            context,
+                            "Match created successfully!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        navController.navigate("homepage")
+                    } else {
+                        // Slot non disponibile
+                        Toast.makeText(
+                            context,
+                            errorMessage ?: "Time slot not available",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
             }
         },
         modifier = Modifier.fillMaxWidth(),
-        enabled = selectedField != null && selectedDate.isNotEmpty() && selectedTime.isNotEmpty()
+        enabled = selectedField != null &&
+                selectedDate.isNotEmpty() &&
+                selectedTime.isNotEmpty() &&
+                !isCheckingAvailability &&
+                (!isPrivate || selectedGroup != null),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            disabledContainerColor = Color.Gray
+        )
     ) {
-        Text(text = "Create", style = TextStyle(fontSize = 18.sp))
+        if (isCheckingAvailability) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = Color.White,
+                strokeWidth = 2.dp
+            )
+        } else {
+            Text(
+                text = "Create",
+                style = TextStyle(fontSize = 18.sp)
+            )
+        }
+    }
+
+    // Messaggio di aiuto
+    if (isPrivate && selectedGroup == null) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "⚠️ Select a group for private matches",
+            color = MaterialTheme.colorScheme.error,
+            fontSize = 12.sp,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
     }
 }

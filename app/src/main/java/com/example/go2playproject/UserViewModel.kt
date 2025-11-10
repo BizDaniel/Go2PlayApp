@@ -8,6 +8,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+private const val USERNAME_REGEX = "^[a-zA-Z0-9_]+( [a-zA-Z0-9_]+)*\$"
+
 class UserViewModel : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
@@ -28,6 +30,7 @@ class UserViewModel : ViewModel() {
     // Stato per gli aggiornamenti del profilo
     private val _profileUpdateState = MutableStateFlow<ProfileUpdateState>(ProfileUpdateState.Idle)
     val profileUpdateState: StateFlow<ProfileUpdateState> = _profileUpdateState
+
 
     init {
         loadCurrentUser()
@@ -77,7 +80,7 @@ class UserViewModel : ViewModel() {
             return
         }
 
-        if(!trimmedUsername.matches(Regex("^[a-zA-Z0-9_]+( [a-zA-Z0-9_]+)*\$"))) {
+        if(!trimmedUsername.matches(Regex(USERNAME_REGEX))) {
             _usernameValidation.value = UsernameValidationState.Invalid("The Username can contain letters, numbers, underscore and single spaces")
             return
         }

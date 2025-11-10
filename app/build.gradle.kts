@@ -80,4 +80,6 @@ dependencies {
     implementation ("androidx.compose.material3:material3:1.1.2")
 
     implementation ("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+
+    implementation("com.google.android.material:material:1.9.0")
 }

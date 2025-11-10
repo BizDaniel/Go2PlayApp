@@ -140,7 +140,7 @@ fun ExplorePage(
 
             when (selectedTab) {
                 TabExplore.Map -> MapScreen()
-                TabExplore.List -> ListScreen(fields)
+                TabExplore.List -> ListScreen(fields, navController)
             }
         }
     }
@@ -179,7 +179,7 @@ fun MapScreen() {
 }
 
 @Composable
-fun ListScreen(fields: List<Field>) {
+fun ListScreen(fields: List<Field>, navController: NavHostController) {
 
     LazyColumn(
         modifier = Modifier
@@ -191,7 +191,10 @@ fun ListScreen(fields: List<Field>) {
             FilterButton() // Pulsante filtro in cima alla lista
         }
         items(fields) { field ->
-            FieldCard(fieldData = field)
+            FieldCard(
+                fieldData = field,
+                navController = navController  // Passa navController
+            )
         }
     }
 }
@@ -207,20 +210,61 @@ fun FilterButton() {
 
 
 @Composable
-fun FieldCard(fieldData: Field) {
+fun FieldCard(
+    fieldData: Field,
+    navController: NavHostController
+    ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(text = fieldData.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Text(text = "Price: ${fieldData.pricePerHour}", fontSize = 14.sp)
-            Text(text = "Location: ${fieldData.address}", fontSize = 14.sp)
-            Button(onClick = { /* TODO: Implementare la logica per la visualizzazione della disponibilità */ },
-                modifier = Modifier.align(Alignment.End)
+            Text(
+                text = fieldData.name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Price: €${fieldData.pricePerHour}/hour",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Location: ${fieldData.address}",
+                        fontSize = 13.sp,
+                        color = Color.Gray,
+                        maxLines = 2
+                    )
+                    Text(
+                        text = "Type: ${fieldData.courtType}",
+                        fontSize = 13.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Button(
+                onClick = {
+                    navController.navigate("fieldavailability/${fieldData.fieldId}")
+                },
+                modifier = Modifier.align(Alignment.End),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
                 Text(text = "View Availability")
             }

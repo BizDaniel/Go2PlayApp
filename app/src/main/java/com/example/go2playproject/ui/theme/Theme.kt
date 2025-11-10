@@ -9,28 +9,59 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Go2PlayColors.PrimaryGreen,
+    onPrimary = Color.White,
+    primaryContainer = Go2PlayColors.AccentGreen,
+    onPrimaryContainer = Go2PlayColors.PrimaryGreenDark,
+
+    secondary = Go2PlayColors.SecondaryGreen,
+    onSecondary = Color.White,
+    secondaryContainer = Go2PlayColors.AccentGreen.copy(alpha = 0.3f),
+    onSecondaryContainer = Go2PlayColors.PrimaryGreenDark,
+
+    tertiary = Go2PlayColors.CategoryTeal,
+    onTertiary = Color.White,
+
+    background = Go2PlayColors.SurfaceLight,
+    onBackground = Color.Black,
+
+    surface = Go2PlayColors.CardLight,
+    onSurface = Color.Black,
+    surfaceVariant = Color(0xFFF0F0F0),
+    onSurfaceVariant = Color(0xFF424242),
+
+    error = Go2PlayColors.Error,
+    onError = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = Go2PlayColors.PrimaryGreen,
     onPrimary = Color.White,
+    primaryContainer = Go2PlayColors.AccentGreen,
+    onPrimaryContainer = Go2PlayColors.PrimaryGreenDark,
+
+    secondary = Go2PlayColors.SecondaryGreen,
     onSecondary = Color.White,
+    secondaryContainer = Go2PlayColors.AccentGreen.copy(alpha = 0.3f),
+    onSecondaryContainer = Go2PlayColors.PrimaryGreenDark,
+
+    tertiary = Go2PlayColors.CategoryTeal,
     onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+
+    background = Go2PlayColors.SurfaceLight,
+    onBackground = Color.Black,
+
+    surface = Go2PlayColors.CardLight,
+    onSurface = Color.Black,
+    surfaceVariant = Color(0xFFF0F0F0),
+    onSurfaceVariant = Color(0xFF424242),
+
+    error = Go2PlayColors.Error,
+    onError = Color.White
 )
 
 @Composable

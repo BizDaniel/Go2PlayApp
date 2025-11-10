@@ -2,9 +2,11 @@ package com.example.go2playproject
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.go2playproject.screens.AvailableMatchesPage
 import com.example.go2playproject.screens.CreateAGroupPage
 import com.example.go2playproject.screens.CreateAMatchPage
@@ -12,6 +14,7 @@ import com.example.go2playproject.screens.EditGroupPage
 import com.example.go2playproject.screens.EditMatchPage
 import com.example.go2playproject.screens.EditProfilePage
 import com.example.go2playproject.screens.ExplorePage
+import com.example.go2playproject.screens.FieldAvailabilityPage
 import com.example.go2playproject.screens.FieldSelectionPage
 import com.example.go2playproject.screens.GroupSelectionPage
 import com.example.go2playproject.screens.HomePage
@@ -92,6 +95,19 @@ fun MyAppNavigation(
         }
         composable(route = "editmatch") {
             EditMatchPage(modifier, navController, authViewModel, calcettoViewModel)
+        }
+        composable(
+            route = "fieldavailability/{fieldId}",
+            arguments = listOf(navArgument("fieldId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val fieldId = backStackEntry.arguments?.getString("fieldId") ?: ""
+            FieldAvailabilityPage(
+                modifier = modifier,
+                navController = navController,
+                authViewModel = authViewModel,
+                calcettoViewModel = calcettoViewModel,
+                fieldId = fieldId
+            )
         }
     }
 }

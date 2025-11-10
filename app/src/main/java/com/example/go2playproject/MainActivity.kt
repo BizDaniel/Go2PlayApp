@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
 import com.example.go2playproject.ui.theme.Go2PlayProjectTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,6 +23,8 @@ class MainActivity : ComponentActivity() {
 
         //val testLoader = TestUserDataLoader()
         //testLoader.loadTestUsers()
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             Go2PlayProjectTheme {

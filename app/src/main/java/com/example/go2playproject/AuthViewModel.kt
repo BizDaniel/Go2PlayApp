@@ -107,7 +107,7 @@ class AuthViewModel : ViewModel() {
      */
     private fun createUserDocument(userId: String, email: String) {
         val userData = mapOf(
-            "name" to "", // L'utente potrà aggiornare il nome dal profilo
+            "name" to "",
             "email" to email,
             "groupsId" to emptyList<String>(),
             "profileImageUrl" to null
@@ -116,23 +116,15 @@ class AuthViewModel : ViewModel() {
         db.collection("users").document(userId)
             .set(userData)
             .addOnSuccessListener {
-                println("User document created successfully!")
+                android.util.Log.d("AuthViewModel", "User document created successfully for $userId")
             }
             .addOnFailureListener { e ->
-                println("Error in creating the user document: $e")
-                // Lo stato di auth non lo cambio perchè l'autenticazione
-                // è comunque risucita
-                // L'utente può comunque usare l'app, ma non verrà trovato nelle
-                // ricerche
+                android.util.Log.e("AuthViewModel", "Error creating user document for $userId: $e")
             }
     }
 
 }
 
-/*
-* sealed class, una classe che rappresenta un numero finito di
-* stati concreti
-* */
 sealed class AuthState{
     object Authenticated : AuthState()
     object Unauthenticated: AuthState()

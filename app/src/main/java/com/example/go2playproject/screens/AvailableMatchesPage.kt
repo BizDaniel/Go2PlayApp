@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -91,6 +92,7 @@ fun AvailableMatchesPage(
 ) {
     val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
+    val isDarkTheme = isSystemInDarkTheme()
 
     // Stati per gestione partite
     val availableMatches by calcettoViewModel.availableMatches.collectAsState()
@@ -143,16 +145,25 @@ fun AvailableMatchesPage(
         color = MaterialTheme.colorScheme.background
     ) {
         Scaffold(
+            containerColor = if (isDarkTheme) Color(0xFF0A0A0A) else Color(0xFFF8F9FA),
             topBar = {
                 TopAppBar(
-                    title = { Text("Available Matches") },
+                    title = { Text(
+                        "Available Matches",
+                        fontWeight = FontWeight.Bold
+                        )
+                            },
                     navigationIcon = {
                         IconButton(onClick = { navController.navigate("homepage") }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
+                        containerColor = Color(0xFF2E7D32),
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White
                     )
