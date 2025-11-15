@@ -244,9 +244,9 @@ fun EditProfileScreen(
                             username = username,
                             age = age.toIntOrNull(),
                             level = level.ifEmpty { null },
-                            preferredRoles = preferredRoles.ifEmpty { null }
+                            preferredRoles = preferredRoles.ifEmpty { null },
+                            onUpdateSuccess = onNavigateBack
                         )
-                        onNavigateBack()
                     },
                     modifier = Modifier
                         .fillMaxWidth()

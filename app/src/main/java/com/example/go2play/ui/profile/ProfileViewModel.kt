@@ -63,7 +63,8 @@ class ProfileViewModel(
         username: String,
         age: Int?,
         level: String?,
-        preferredRoles: String?
+        preferredRoles: String?,
+        onUpdateSuccess: () -> Unit
     ) {
         viewModelScope.launch {
             _profileState.value = _profileState.value.copy(isLoading = true, error = null)
@@ -81,6 +82,7 @@ class ProfileViewModel(
             result.fold(
                 onSuccess = {
                     loadProfile() // Ricarica il profilo aggiornato
+                    onUpdateSuccess()
                 },
                 onFailure = { exception ->
                     _profileState.value = _profileState.value.copy(
