@@ -23,7 +23,8 @@ import com.example.go2play.ui.profile.ProfileViewModel
 
 @Composable
 fun HomeScreen(
-    profileViewModel: ProfileViewModel = viewModel()
+    profileViewModel: ProfileViewModel = viewModel(),
+    onNavigateToCreateGroup: () -> Unit = {}
 ) {
     val profileState by profileViewModel.profileState.collectAsStateWithLifecycle()
     val profile = profileState.profile
@@ -119,7 +120,7 @@ fun HomeScreen(
                 icon = Icons.Default.GroupAdd,
                 label = "Create a Group",
                 modifier = Modifier.weight(1f),
-                onClick = { /* TODO */ }
+                onClick = onNavigateToCreateGroup
             )
         }
 

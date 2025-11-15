@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import com.example.go2play.ui.auth.AuthViewModel
 import com.example.go2play.ui.auth.LoginScreen
 import com.example.go2play.ui.auth.SignUpScreen
+import com.example.go2play.ui.groups.CreateGroupScreen
 import com.example.go2play.ui.home.HomeScreen
 import com.example.go2play.ui.profile.EditProfileScreen
 import com.example.go2play.ui.profile.ProfileScreen
@@ -22,6 +23,7 @@ sealed class Screen(val route: String) {
     object Explore : Screen("explore")
     object Profile : Screen("profile")
     object EditProfile : Screen("edit_profile")
+    object CreateGroup : Screen("create_group")
 }
 
 @Composable
@@ -51,7 +53,9 @@ fun AppNavHost(navController: NavHostController) {
 
         composable(Screen.Home.route) {
             MainScaffold(navController, Screen.Home.route) {
-                HomeScreen()
+                HomeScreen(
+                    onNavigateToCreateGroup = { navController.navigate(Screen.CreateGroup.route) }
+                )
             }
         }
 
@@ -82,6 +86,17 @@ fun AppNavHost(navController: NavHostController) {
             MainScaffold(navController, Screen.EditProfile.route) {
                 EditProfileScreen(
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
+
+        composable(Screen.CreateGroup.route) {
+            MainScaffold(navController, Screen.CreateGroup.route) {
+                CreateGroupScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onGroupCreated = {
+                        navController.popBackStack()
+                    }
                 )
             }
         }
