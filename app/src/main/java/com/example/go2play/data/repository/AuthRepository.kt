@@ -8,14 +8,22 @@ import io.github.jan.supabase.gotrue.providers.builtin.Email
 class AuthRepository {
 
     private val client = SupabaseClient.client
+    private val profileRepository = ProfileRepository()
 
-    // Registrazione con email e password
-    suspend fun signUp(email: String, password: String): Result<Unit> {
+    // Registrazione con email, password e username
+    suspend fun signUp(email: String, password: String, username: String): Result<Unit> {
         return try {
             client.auth.signUpWith(Email) {
                 this.email = email
                 this.password = password
             }
+
+            // Ottieni l'ID dell'utente appena creato
+            // L'utente appena creato è ora l'utente corrente nel client auth
+            val userId = client.auth.currentUserOrNull()?.id ?: throw Exception("User ID not found after sign up")
+
+            profileRepository.createProfile(userId, email, username)
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

@@ -17,7 +17,7 @@ sealed class BottomNavItem(
     val icon: ImageVector
 ) {
     object Explore : BottomNavItem("explore", "Explore", Icons.Default.Search)
-    object Home : BottomNavItem("matches", "Matches", Icons.Default.Home)
+    object Home : BottomNavItem("home", "Home", Icons.Default.Home)
     object Profile : BottomNavItem("profile", "Profile", Icons.Default.Person)
 }
 

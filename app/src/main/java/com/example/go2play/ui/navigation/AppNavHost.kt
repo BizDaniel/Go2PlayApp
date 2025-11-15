@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.go2play.ui.auth.AuthViewModel
 import com.example.go2play.ui.auth.LoginScreen
 import com.example.go2play.ui.auth.SignUpScreen
 import com.example.go2play.ui.home.HomeScreen
@@ -48,7 +50,9 @@ fun AppNavHost(navController: NavHostController) {
         }
 
         composable(Screen.Home.route) {
-            HomeScreen()
+            MainScaffold(navController, Screen.Home.route) {
+                HomeScreen()
+            }
         }
 
         composable(Screen.Explore.route) {
@@ -58,10 +62,14 @@ fun AppNavHost(navController: NavHostController) {
         }
 
         composable(Screen.Profile.route) {
+
+            val authViewModel: AuthViewModel = viewModel()
+
             MainScaffold(navController, Screen.Profile.route) {
                 ProfileScreen(
                     onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
                     onLogout = {
+                        authViewModel.signOut()
                         navController.navigate(Screen.Login.route) {
                             popUpTo(0) { inclusive = true }
                         }
