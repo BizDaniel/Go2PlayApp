@@ -15,6 +15,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -28,6 +30,18 @@ fun ProfileScreen(
 ) {
     val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val profile = profileState.profile
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.currentStateFlow.collect { state ->
+            // Quando lo schermo torna "RESUMED" (es. tornando da EditProfileScreen)
+            if (state == Lifecycle.State.RESUMED) {
+                // Ricarica il profilo
+                viewModel.loadProfile()
+            }
+        }
+    }
 
     Scaffold(
         topBar = {

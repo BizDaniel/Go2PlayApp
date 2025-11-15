@@ -1,6 +1,7 @@
 package com.example.go2play.data.repository
 
 import android.util.Log
+import com.example.go2play.data.model.ProfileUpdate
 import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.remote.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
@@ -55,12 +56,13 @@ class ProfileRepository {
         avatarUrl: String? = null
     ): Result<Unit> {
         return try {
-            val updates = mutableMapOf<String, Any?>()
-            username?.let { updates["username"] = it }
-            age?.let { updates["age"] = it }
-            level?.let { updates["level"] = it }
-            preferredRoles?.let { updates["preferred_roles"] = it }
-            avatarUrl?.let { updates["avatar_url"] = it }
+            val updates = ProfileUpdate(
+                username = username,
+                age = age,
+                level = level,
+                preferredRoles = preferredRoles,
+                avatarUrl = avatarUrl
+            )
 
             client.from("profiles")
                 .update(updates) {
