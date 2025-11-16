@@ -12,6 +12,8 @@ data class Group(
     val creatorId: String,
     @SerialName("member_ids")
     val memberIDs: List<String> = emptyList(),
+    @SerialName("group_image_url")
+    val groupImageUrl: String? = null,
     @SerialName("created_at")
     val createdAt: String? = null
 )
@@ -23,5 +25,7 @@ data class GroupCreate(
     @SerialName("creator_id")
     val creatorId: String,
     @SerialName("member_ids")
-    val memberIDs: List<String>
+    val memberIDs: List<String>,
+    @SerialName("group_image_url")
+    val groupImageUrl: String? = null
 )

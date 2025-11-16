@@ -23,7 +23,9 @@ data class CreateGroupState(
     val searchResults: List<UserProfile> = emptyList(),
     val selectedMembers: List<UserProfile> = emptyList(),
     val currentUserId: String? = null,
-    val isCreating: Boolean = false
+    val isCreating: Boolean = false,
+    val isUploadingImage: Boolean = false,
+    val groupImageUrl: String? = null
 )
 
 class CreateGroupViewModel(
@@ -53,6 +55,28 @@ class CreateGroupViewModel(
     fun updateSearchQuery(query: String) {
         _state.value = _state.value.copy(searchQuery = query)
         searchUsers(query)
+    }
+
+    fun uploadGroupImage(imageBytes: ByteArray) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isUploadingImage = true, error = null)
+
+            val result = repository.uploadGroupImage(imageBytes)
+            result.fold(
+                onSuccess = { imageUrl ->
+                    _state.value = _state.value.copy(
+                        isUploadingImage = false,
+                        groupImageUrl = imageUrl
+                    )
+                },
+                onFailure = { exception ->
+                    _state.value = _state.value.copy(
+                        isUploadingImage = false,
+                        error = exception.message ?: "Error uploading image"
+                    )
+                }
+            )
+        }
     }
 
     private fun checkGroupNameAvailability(name: String) {
@@ -164,7 +188,8 @@ class CreateGroupViewModel(
             val result = repository.createGroup(
                 name = _state.value.groupName,
                 description = _state.value.groupDescription.ifBlank { null }.toString(),
-                memberIds = memberIds
+                memberIds = memberIds,
+                groupImageUrl = _state.value.groupImageUrl
             )
 
             result.fold(

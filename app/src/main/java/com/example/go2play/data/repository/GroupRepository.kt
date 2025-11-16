@@ -7,6 +7,8 @@ import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.remote.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.storage.storage
+import java.util.UUID
 
 class GroupRepository {
     private val client = SupabaseClient.client
@@ -49,10 +51,27 @@ class GroupRepository {
         }
     }
 
+    // Upload immagine del gruppo
+    suspend fun uploadGroupImage(imageBytes: ByteArray): Result<String> {
+        return try {
+            val bucket = client.storage.from("group-images")
+            val fileName = "${UUID.randomUUID()}.jpg"
+
+            bucket.upload(fileName, imageBytes, upsert = true)
+
+            val publicUrl = bucket.publicUrl(fileName)
+            Result.success(publicUrl)
+        } catch (e: Exception) {
+            Log.e("GroupRepository", "Error uploading group image", e)
+            Result.failure(e)
+        }
+    }
+
     suspend fun createGroup(
         name: String,
         description: String,
-        memberIds: List<String>
+        memberIds: List<String>,
+        groupImageUrl: String? = null
     ): Result<Group> {
         return try {
             val currentUserId = client.auth.currentUserOrNull()?.id
@@ -69,7 +88,8 @@ class GroupRepository {
                 name = name,
                 description = description,
                 creatorId = currentUserId,
-                memberIDs = allMemberIds
+                memberIDs = allMemberIds,
+                groupImageUrl = groupImageUrl
             )
 
             val createdGroup = client.from("groups")
