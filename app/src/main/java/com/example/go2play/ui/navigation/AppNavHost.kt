@@ -12,6 +12,7 @@ import com.example.go2play.ui.auth.AuthViewModel
 import com.example.go2play.ui.auth.LoginScreen
 import com.example.go2play.ui.auth.SignUpScreen
 import com.example.go2play.ui.groups.CreateGroupScreen
+import com.example.go2play.ui.groups.MyGroupsScreen
 import com.example.go2play.ui.home.HomeScreen
 import com.example.go2play.ui.profile.EditProfileScreen
 import com.example.go2play.ui.profile.ProfileScreen
@@ -24,6 +25,7 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object EditProfile : Screen("edit_profile")
     object CreateGroup : Screen("create_group")
+    object MyGroups : Screen("my_groups")
 }
 
 @Composable
@@ -54,7 +56,8 @@ fun AppNavHost(navController: NavHostController) {
         composable(Screen.Home.route) {
             MainScaffold(navController, Screen.Home.route) {
                 HomeScreen(
-                    onNavigateToCreateGroup = { navController.navigate(Screen.CreateGroup.route) }
+                    onNavigateToCreateGroup = { navController.navigate(Screen.CreateGroup.route) },
+                    onNavigateToMyGroups = { navController.navigate(Screen.MyGroups.route)}
                 )
             }
         }
@@ -96,6 +99,17 @@ fun AppNavHost(navController: NavHostController) {
                     onNavigateBack = { navController.popBackStack() },
                     onGroupCreated = {
                         navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable(Screen.MyGroups.route) {
+            MainScaffold(navController, Screen.MyGroups.route) {
+                MyGroupsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onGroupClick = { group ->
+                        // TODO: Navigare alla pagina di dettaglio del gruppo
                     }
                 )
             }
