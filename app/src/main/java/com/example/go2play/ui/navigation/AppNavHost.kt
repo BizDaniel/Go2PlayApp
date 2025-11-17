@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import com.example.go2play.ui.auth.AuthViewModel
 import com.example.go2play.ui.auth.LoginScreen
 import com.example.go2play.ui.auth.SignUpScreen
+import com.example.go2play.ui.explore.ExploreScreen
 import com.example.go2play.ui.groups.CreateGroupScreen
 import com.example.go2play.ui.groups.MyGroupsScreen
 import com.example.go2play.ui.home.HomeScreen
@@ -64,7 +65,11 @@ fun AppNavHost(navController: NavHostController) {
 
         composable(Screen.Explore.route) {
             MainScaffold(navController, Screen.Explore.route) {
-                HomeScreen()
+                ExploreScreen(
+                    onFieldClick = { field ->
+                        // TODO: Navigare ai dettagli del campo
+                    }
+                )
             }
         }
 
