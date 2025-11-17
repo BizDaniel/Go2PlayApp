@@ -29,7 +29,7 @@ fun ExploreScreen(
     viewModel: ExploreViewModel = viewModel(),
     onFieldClick: (Field) -> Unit = {}
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.fieldState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Mostra errori

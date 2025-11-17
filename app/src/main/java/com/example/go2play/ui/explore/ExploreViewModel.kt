@@ -27,8 +27,8 @@ class ExploreViewModel(
     private val repository: FieldRepository = FieldRepository()
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ExploreState())
-    val state: StateFlow<ExploreState> = _state.asStateFlow()
+    private val _fieldState = MutableStateFlow(ExploreState())
+    val fieldState: StateFlow<ExploreState> = _fieldState.asStateFlow()
 
     private var searchJob: Job? = null
 
@@ -38,12 +38,12 @@ class ExploreViewModel(
 
     fun loadFields() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
+            _fieldState.value = _fieldState.value.copy(isLoading = true, error = null)
 
             val result = repository.getAllFields()
             result.fold(
                 onSuccess = { fields ->
-                    _state.value = _state.value.copy(
+                    _fieldState.value = _fieldState.value.copy(
                         isLoading = false,
                         fields = fields,
                         filteredFields = fields,
@@ -51,7 +51,7 @@ class ExploreViewModel(
                     )
                 },
                 onFailure = { exception ->
-                    _state.value = _state.value.copy(
+                    _fieldState.value = _fieldState.value.copy(
                         isLoading = false,
                         error = exception.message ?: "Error loading fields"
                     )
@@ -61,7 +61,7 @@ class ExploreViewModel(
     }
 
     fun updateSearchQuery(query: String) {
-        _state.value = _state.value.copy(searchQuery = query)
+        _fieldState.value = _fieldState.value.copy(searchQuery = query)
         searchFields(query)
     }
 
@@ -74,19 +74,19 @@ class ExploreViewModel(
         }
 
         searchJob = viewModelScope.launch {
-            _state.value = _state.value.copy(isSearching = true)
+            _fieldState.value = _fieldState.value.copy(isSearching = true)
             delay(300) // Debounce
 
             val result = repository.searchFields(query)
             result.fold(
                 onSuccess = { fields ->
-                    _state.value = _state.value.copy(
+                    _fieldState.value = _fieldState.value.copy(
                         filteredFields = filterByCurrentFilters(fields),
                         isSearching = false
                     )
                 },
                 onFailure = { exception ->
-                    _state.value = _state.value.copy(
+                    _fieldState.value = _fieldState.value.copy(
                         isSearching = false,
                         error = exception.message
                     )
@@ -96,46 +96,46 @@ class ExploreViewModel(
     }
 
     fun filterByCapacity(capacity: Int?) {
-        _state.value = _state.value.copy(selectedCapacity = capacity)
+        _fieldState.value = _fieldState.value.copy(selectedCapacity = capacity)
         applyFilters()
     }
 
     fun filterByIndoor(isIndoor: Boolean?) {
-        _state.value = _state.value.copy(selectedIndoorFilter = isIndoor)
+        _fieldState.value = _fieldState.value.copy(selectedIndoorFilter = isIndoor)
         applyFilters()
     }
 
     private fun applyFilters() {
-        var filtered = if (_state.value.searchQuery.isBlank()) {
-            _state.value.fields
+        var filtered = if (_fieldState.value.searchQuery.isBlank()) {
+            _fieldState.value.fields
         } else {
-            _state.value.fields.filter { field ->
-                field.name.contains(_state.value.searchQuery, ignoreCase = true) ||
-                        field.address.contains(_state.value.searchQuery, ignoreCase = true)
+            _fieldState.value.fields.filter { field ->
+                field.name.contains(_fieldState.value.searchQuery, ignoreCase = true) ||
+                        field.address.contains(_fieldState.value.searchQuery, ignoreCase = true)
             }
         }
 
         // Filtra per capacità
-        _state.value.selectedCapacity?.let { capacity ->
+        _fieldState.value.selectedCapacity?.let { capacity ->
             filtered = filtered.filter { it.playerCapacity == capacity }
         }
 
         // Filtra per indoor/outdoor
-        _state.value.selectedIndoorFilter?.let { isIndoor ->
+        _fieldState.value.selectedIndoorFilter?.let { isIndoor ->
             filtered = filtered.filter { it.isIndoor == isIndoor }
         }
 
-        _state.value = _state.value.copy(filteredFields = filtered)
+        _fieldState.value = _fieldState.value.copy(filteredFields = filtered)
     }
 
     private fun filterByCurrentFilters(fields: List<Field>): List<Field> {
         var filtered = fields
 
-        _state.value.selectedCapacity?.let { capacity ->
+        _fieldState.value.selectedCapacity?.let { capacity ->
             filtered = filtered.filter { it.playerCapacity == capacity }
         }
 
-        _state.value.selectedIndoorFilter?.let { isIndoor ->
+        _fieldState.value.selectedIndoorFilter?.let { isIndoor ->
             filtered = filtered.filter { it.isIndoor == isIndoor }
         }
 
@@ -143,7 +143,7 @@ class ExploreViewModel(
     }
 
     fun clearFilters() {
-        _state.value = _state.value.copy(
+        _fieldState.value = _fieldState.value.copy(
             selectedCapacity = null,
             selectedIndoorFilter = null,
             searchQuery = ""
@@ -152,6 +152,6 @@ class ExploreViewModel(
     }
 
     fun clearError() {
-        _state.value = _state.value.copy(error = null)
+        _fieldState.value = _fieldState.value.copy(error = null)
     }
 }
