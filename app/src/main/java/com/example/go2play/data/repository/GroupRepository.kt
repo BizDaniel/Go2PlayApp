@@ -182,10 +182,15 @@ class GroupRepository {
         groupImageUrl: String? = null
     ): Result<Unit> {
         return try {
-            val updates = mutableMapOf<String, Any?>()
-            name?.let { updates["name"] = it }
-            description?.let { updates["description"] = it }
-            groupImageUrl?.let { updates["group_image_url"] = it }
+            val updates = buildMap<String, Any> {
+                name?.let { put("name", it) }
+                description?.let { put("description", it) }
+                groupImageUrl?.let { put("group_image_url", it) }
+            }
+
+            if (updates.isEmpty()) {
+                return Result.success(Unit)
+            }
 
             client.from("groups")
                 .update(updates) {
@@ -319,6 +324,94 @@ class GroupRepository {
             Result.success(members)
         } catch (e: Exception) {
             Log.e("GroupRepository", "Error getting group members", e)
+            Result.failure(e)
+        }
+    }
+
+    // aggiungi un membro al gruppo (solo per creatore)
+    suspend fun addMemberToGroup(groupId: String, userId: String): Result<Unit> {
+        return try {
+            // Ottieni il gruppo corrente
+            val group = client.from("groups")
+                .select {
+                    filter {
+                        eq("id", groupId)
+                    }
+                }
+                .decodeSingle<Group>()
+
+            // Verifica che l'utente non sia già membro
+            if (group.memberIDs.contains(userId)) {
+                return Result.failure(Exception("User is already a member"))
+            }
+
+            // Aggiungi il nuovo membro
+            val updatedMemberIds = group.memberIDs + userId
+
+            // Aggiorna il gruppo
+            client.from("groups")
+                .update(
+                    mapOf("member_ids" to updatedMemberIds)
+                ) {
+                    filter {
+                        eq("id", groupId)
+                    }
+                }
+
+            // Aggiorna il profilo dell'utente
+            updateUserGroupIds(listOf(userId), groupId)
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("GroupRepository", "Error adding member", e)
+            Result.failure(e)
+        }
+    }
+
+    // Rimuovi un membro dal gruppo (solo per creatore)
+    suspend fun removeMemberFromGroup(groupId: String, userId: String): Result<Unit> {
+        return try {
+            val currentUserId = client.auth.currentUserOrNull()?.id
+                ?: return Result.failure(Exception("User not authenticated"))
+
+            // Ottieni il gruppo
+            val group = client.from("groups")
+                .select {
+                    filter {
+                        eq("id", groupId)
+                    }
+                }
+                .decodeSingle<Group>()
+
+            // Verifica che l'utente non stia cercando di rimuovere il creatore
+            if (userId == group.creatorId) {
+                return Result.failure(Exception("Cannot remove the group creator"))
+            }
+
+            // Verifica che chi richiede sia il creatore
+            if (currentUserId != group.creatorId) {
+                return Result.failure(Exception("Only the creator can remove members"))
+            }
+
+            // Rimuovi il membro
+            val updatedMemberIds = group.memberIDs.filter { it != userId }
+
+            // Aggiorna il gruppo
+            client.from("groups")
+                .update(
+                    mapOf("member_ids" to updatedMemberIds)
+                ) {
+                    filter {
+                        eq("id", groupId)
+                    }
+                }
+
+            // Rimuovi il gruppo dal profilo dell'utente
+            removeGroupFromUserProfiles(listOf(userId), groupId)
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("GroupRepository", "Error removing member", e)
             Result.failure(e)
         }
     }
