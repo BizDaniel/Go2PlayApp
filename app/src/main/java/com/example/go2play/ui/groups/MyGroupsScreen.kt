@@ -28,7 +28,7 @@ fun MyGroupsScreen(
     onNavigateBack: () -> Unit,
     onGroupClick: (Group) -> Unit = {}
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.groupState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Mostra errori

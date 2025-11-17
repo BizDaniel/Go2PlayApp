@@ -19,8 +19,8 @@ class MyGroupsViewModel(
     private val repository: GroupRepository = GroupRepository()
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(MyGroupsState())
-    val state: StateFlow<MyGroupsState> = _state.asStateFlow()
+    private val _groupState = MutableStateFlow(MyGroupsState())
+    val groupState: StateFlow<MyGroupsState> = _groupState.asStateFlow()
 
     init {
         loadGroups()
@@ -28,19 +28,19 @@ class MyGroupsViewModel(
 
     fun loadGroups() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
+            _groupState.value = _groupState.value.copy(isLoading = true, error = null)
 
             val result = repository.getUserGroups()
             result.fold(
                 onSuccess = { groups ->
-                    _state.value = _state.value.copy(
+                    _groupState.value = _groupState.value.copy(
                         isLoading = false,
                         groups = groups,
                         error = null
                     )
                 },
                 onFailure = { exception ->
-                    _state.value = _state.value.copy(
+                    _groupState.value = _groupState.value.copy(
                         isLoading = false,
                         error = exception.message ?: "Error loading groups"
                     )
@@ -50,7 +50,7 @@ class MyGroupsViewModel(
     }
 
     fun clearError() {
-        _state.value = _state.value.copy(error = null)
+        _groupState.value = _groupState.value.copy(error = null)
     }
 }
 

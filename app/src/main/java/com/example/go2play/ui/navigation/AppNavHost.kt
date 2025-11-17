@@ -6,13 +6,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.go2play.ui.auth.AuthViewModel
 import com.example.go2play.ui.auth.LoginScreen
 import com.example.go2play.ui.auth.SignUpScreen
 import com.example.go2play.ui.explore.ExploreScreen
 import com.example.go2play.ui.groups.CreateGroupScreen
+import com.example.go2play.ui.groups.GroupDetailScreen
+import com.example.go2play.ui.groups.GroupDetailState
 import com.example.go2play.ui.groups.MyGroupsScreen
 import com.example.go2play.ui.home.HomeScreen
 import com.example.go2play.ui.profile.EditProfileScreen
@@ -27,6 +31,7 @@ sealed class Screen(val route: String) {
     object EditProfile : Screen("edit_profile")
     object CreateGroup : Screen("create_group")
     object MyGroups : Screen("my_groups")
+    object DetailGroup : Screen("detail_group")
 }
 
 @Composable
@@ -114,9 +119,28 @@ fun AppNavHost(navController: NavHostController) {
                 MyGroupsScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onGroupClick = { group ->
-                        // TODO: Navigare alla pagina di dettaglio del gruppo
+                        navController.navigate(Screen.DetailGroup.route + "/${group.id}")
                     }
                 )
+            }
+        }
+
+        composable(
+            route = Screen.DetailGroup.route + "/{groupId}",
+            arguments = listOf(navArgument("groupId") {type = NavType.StringType})
+        ) { backStackEntry ->
+
+            val groupId = backStackEntry.arguments?.getString("groupId")
+
+            MainScaffold(navController, Screen.DetailGroup.route) {
+                if(groupId != null) {
+                    GroupDetailScreen(
+                        groupId = groupId,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                } else {
+                    navController.popBackStack()
+                }
             }
         }
     }
