@@ -146,6 +146,18 @@ fun GroupDetailScreen(
         )
     }
 
+    // Dialogo per aggiungere membri
+    if (state.showAddMemberDialog) {
+        AddMemberDialog(
+            searchQuery = state.searchQuery,
+            isSearching = state.isSearching,
+            searchResults = state.searchResults,
+            onSearchQueryChange = { viewModel.updateSearchQuery(it) },
+            onAddMember = { user -> viewModel.addMember(user.id) },
+            onDismiss = { viewModel.toggleAddMemberDialog() }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -171,6 +183,16 @@ fun GroupDetailScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            // FAB per aggiungere membri (solo per creatore)
+            if (state.isCreator) {
+                FloatingActionButton(
+                    onClick = { viewModel.toggleAddMemberDialog() }
+                ) {
+                    Icon(Icons.Default.PersonAdd, contentDescription = "Add member")
+                }
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
@@ -317,7 +339,11 @@ fun GroupDetailScreen(
                         state.members.forEach { member ->
                             MemberItem(
                                 member = member,
-                                isCreator = member.id == state.group!!.creatorId
+                                isCreator = member.id == state.group!!.creatorId,
+                                isGroupCreator = state.isCreator,
+                                onRemoveMember = if (state.isCreator && member.id != state.group!!.creatorId) {
+                                    { viewModel.removeMember(member.id) }
+                                } else null
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
@@ -362,7 +388,9 @@ fun GroupDetailScreen(
 @Composable
 fun MemberItem(
     member: UserProfile,
-    isCreator: Boolean
+    isCreator: Boolean,
+    isGroupCreator: Boolean = false,
+    onRemoveMember: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -431,6 +459,17 @@ fun MemberItem(
                     )
                 }
             }
+
+            // Pulsante rimuovi (solo per il creatore del gruppo e solo se non è il creatore)
+            if (isGroupCreator && !isCreator && onRemoveMember != null) {
+                IconButton(onClick = onRemoveMember) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Remove member",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
         }
     }
 }
@@ -481,5 +520,184 @@ fun EditGroupDialog(
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddMemberDialog(
+    searchQuery: String,
+    isSearching: Boolean,
+    searchResults: List<UserProfile>,
+    onSearchQueryChange: (String) -> Unit,
+    onAddMember: (UserProfile) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "Add Member",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Barra di ricerca
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchQueryChange,
+                    label = { Text("Search users...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    },
+                    trailingIcon = {
+                        if (isSearching) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else if (searchQuery.isNotBlank()) {
+                            IconButton(onClick = { onSearchQueryChange("") }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear")
+                            }
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Risultati ricerca
+                if (searchQuery.isNotBlank()) {
+                    if (searchResults.isEmpty() && !isSearching) {
+                        Text(
+                            text = "No users found",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 300.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            searchResults.forEach { user ->
+                                UserSearchResultItem(
+                                    user = user,
+                                    onAdd = { onAddMember(user) }
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "Start typing to search for users",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Pulsante chiudi
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UserSearchResultItem(
+    user: UserProfile,
+    onAdd: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onAdd
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                // Avatar
+                if (user.avatarUrl != null) {
+                    AsyncImage(
+                        model = user.avatarUrl,
+                        contentDescription = "Avatar",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = "Default avatar",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = user.username,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    user.level?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            Icon(
+                Icons.Default.Add,
+                contentDescription = "Add member",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
 }
 

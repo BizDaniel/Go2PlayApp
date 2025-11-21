@@ -124,7 +124,7 @@ class AuthViewModel(
                 onFailure = { exception ->
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        error = exception.message ?: "Errore during the login"
+                        error = exception.message ?: "Error during the log in"
                     )
                 }
             )
@@ -133,9 +133,26 @@ class AuthViewModel(
 
     fun signOut() {
         viewModelScope.launch {
-            authRepository.signOut()
-            _authState.value = AuthState(isAuthenticated = false)
+            _authState.value = _authState.value.copy(isLoading = true, error = null)
+
+            val result = authRepository.signOut()
+            result.fold(
+                onSuccess = {
+                    _authState.value.copy(
+                        isLoading = false,
+                        isAuthenticated = false,
+                        error = null
+                    )
+                },
+                onFailure = { exception ->
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        error = exception.message ?: "Sign out error"
+                    )
+                }
+            )
         }
+        _authState.value = AuthState(isAuthenticated = false)
     }
 
     fun clearError() {

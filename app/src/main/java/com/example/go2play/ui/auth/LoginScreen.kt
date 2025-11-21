@@ -11,7 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun LoginScreen(
-    viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    viewModel: AuthViewModel,
     onNavigateToSignUp: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {

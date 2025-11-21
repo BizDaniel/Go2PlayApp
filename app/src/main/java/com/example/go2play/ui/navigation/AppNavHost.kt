@@ -3,7 +3,10 @@ package com.example.go2play.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,7 +19,6 @@ import com.example.go2play.ui.auth.SignUpScreen
 import com.example.go2play.ui.explore.ExploreScreen
 import com.example.go2play.ui.groups.CreateGroupScreen
 import com.example.go2play.ui.groups.GroupDetailScreen
-import com.example.go2play.ui.groups.GroupDetailState
 import com.example.go2play.ui.groups.MyGroupsScreen
 import com.example.go2play.ui.home.HomeScreen
 import com.example.go2play.ui.profile.EditProfileScreen
@@ -36,9 +38,25 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
+    // Crea un'istanza condivisa di AuthViewModel
+    val authViewModel: AuthViewModel = viewModel()
+    val authState by authViewModel.authState.collectAsStateWithLifecycle()
+
+    // Osserva lo stato di autenticazione e reindirizza al login se necessario
+    LaunchedEffect(authState.isAuthenticated) {
+        if (!authState.isAuthenticated &&
+            navController.currentDestination?.route != Screen.Login.route &&
+            navController.currentDestination?.route != Screen.SignUp.route) {
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     NavHost(navController = navController, startDestination = Screen.Login.route) {
         composable(Screen.Login.route) {
             LoginScreen(
+                viewModel = authViewModel,
                 onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
                 onLoginSuccess = {
                     navController.navigate(Screen.Home.route) {
@@ -50,6 +68,7 @@ fun AppNavHost(navController: NavHostController) {
 
         composable(Screen.SignUp.route) {
             SignUpScreen(
+                viewModel = authViewModel,
                 onNavigateToLogin = { navController.popBackStack() },
                 onSignUpSuccess = {
                     navController.navigate(Screen.Home.route) {
@@ -79,9 +98,6 @@ fun AppNavHost(navController: NavHostController) {
         }
 
         composable(Screen.Profile.route) {
-
-            val authViewModel: AuthViewModel = viewModel()
-
             MainScaffold(navController, Screen.Profile.route) {
                 ProfileScreen(
                     onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
