@@ -92,8 +92,8 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             MainActionButton(
-                icon = Icons.Default.Add,
-                label = "Create a Match",
+                icon = Icons.Default.Search,
+                label = "Find a Match",
                 modifier = Modifier.weight(1f),
                 onClick = { /* TODO */ }
             )
@@ -191,34 +191,6 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Find a Match
-        OutlinedCard(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            onClick = { /* TODO */ }
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Find a Match",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
             }
         }
     }
