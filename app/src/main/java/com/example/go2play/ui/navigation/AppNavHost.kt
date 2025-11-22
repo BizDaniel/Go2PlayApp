@@ -1,10 +1,14 @@
 package com.example.go2play.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -41,6 +45,24 @@ fun AppNavHost(navController: NavHostController) {
     // Crea un'istanza condivisa di AuthViewModel
     val authViewModel: AuthViewModel = viewModel()
     val authState by authViewModel.authState.collectAsStateWithLifecycle()
+
+    // Mostra loading durante controllo sessione
+    if(authState.isCheckingSession) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    // Determina la destinazione di start in base allo stato di autenticazione
+    val startDestination = if (authState.isAuthenticated) {
+        Screen.Home.route
+    } else {
+        Screen.Login.route
+    }
 
     // Osserva lo stato di autenticazione e reindirizza al login se necessario
     LaunchedEffect(authState.isAuthenticated) {
