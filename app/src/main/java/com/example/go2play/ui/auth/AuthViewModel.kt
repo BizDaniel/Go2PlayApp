@@ -17,7 +17,8 @@ data class AuthState(
     val error: String? = null,
     val userEmail: String? = null,
     val isUsernameAvailable: Boolean? = null,
-    val isCheckingUsername: Boolean = false
+    val isCheckingUsername: Boolean = false,
+    val isCheckingSession: Boolean = true
 )
 
 class AuthViewModel(
@@ -35,6 +36,28 @@ class AuthViewModel(
     }
 
     private fun checkAuthStatus() {
+        viewModelScope.launch {
+            _authState.value = _authState.value.copy(isCheckingSession = true)
+
+            val restoreResult = authRepository.restoreSession()
+
+            restoreResult.fold(
+                onSuccess = { hasSession ->
+                    val email = if (hasSession) authRepository.getCurrentUSerEmail() else null
+                    _authState.value = _authState.value.copy(
+                        isAuthenticated = hasSession,
+                        userEmail = email,
+                        isCheckingSession = false
+                    )
+                },
+                onFailure = {
+                    _authState.value = _authState.value.copy(
+                        isAuthenticated = false,
+                        isCheckingSession = false
+                    )
+                }
+            )
+        }
         val isLoggedIn = authRepository.isUserLoggedIn()
         val email = authRepository.getCurrentUSerEmail()
         _authState.value = _authState.value.copy(

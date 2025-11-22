@@ -5,6 +5,7 @@ import com.example.go2play.data.model.Group
 import com.example.go2play.data.model.GroupCreate
 import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.remote.SupabaseClient
+import kotlinx.serialization.Serializable
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
@@ -174,6 +175,13 @@ class GroupRepository {
         }
     }
 
+    @Serializable
+    private data class GroupUpdateData(
+        val name: String? = null,
+        val description: String? = null,
+        val group_image_url: String? = null
+    )
+
     // Aggiorna gruppo (solo per creatore)
     suspend fun updateGroup(
         groupId: String,
@@ -182,22 +190,32 @@ class GroupRepository {
         groupImageUrl: String? = null
     ): Result<Unit> {
         return try {
-            val updates = buildMap<String, Any> {
-                name?.let { put("name", it) }
-                description?.let { put("description", it) }
-                groupImageUrl?.let { put("group_image_url", it) }
-            }
-
-            if (updates.isEmpty()) {
-                return Result.success(Unit)
+            // Crea l'oggetto di aggiornamento solo con i campi non-null
+            val updateData = when {
+                name != null && description != null && groupImageUrl != null ->
+                    GroupUpdateData(name = name, description = description, group_image_url = groupImageUrl)
+                name != null && description != null ->
+                    GroupUpdateData(name = name, description = description)
+                name != null && groupImageUrl != null ->
+                    GroupUpdateData(name = name, group_image_url = groupImageUrl)
+                description != null && groupImageUrl != null ->
+                    GroupUpdateData(description = description, group_image_url = groupImageUrl)
+                name != null ->
+                    GroupUpdateData(name = name)
+                description != null ->
+                    GroupUpdateData(description = description)
+                groupImageUrl != null ->
+                    GroupUpdateData(group_image_url = groupImageUrl)
+                else -> return Result.success(Unit) // Nessun aggiornamento necessario
             }
 
             client.from("groups")
-                .update(updates) {
+                .update(updateData) {
                     filter {
                         eq("id", groupId)
                     }
                 }
+
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e("GroupRepository", "Error updating group", e)

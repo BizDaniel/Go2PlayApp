@@ -62,5 +62,17 @@ class AuthRepository {
     fun getCurrentUSerEmail(): String? {
         return client.auth.currentUserOrNull()?.email
     }
+
+    // Verifica e ripristina la sessione
+    suspend fun restoreSession(): Result<Boolean> {
+        return try {
+            // Supabase Kotlin gestisce automaticamente il refresh del token
+            // Basta verificare se esiste una sessione valida
+            val hasSession = client.auth.currentSessionOrNull() != null
+            Result.success(hasSession)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
