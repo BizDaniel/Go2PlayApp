@@ -1,0 +1,196 @@
+package com.example.go2play.ui.event
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.go2play.data.model.EventCreate
+import com.example.go2play.data.model.TimeSlot
+import org.threeten.bp.LocalDate
+import com.example.go2play.data.model.Field
+import com.example.go2play.data.model.SlotStatus
+import com.example.go2play.data.model.TimeSlots
+import com.example.go2play.data.repository.EventRepository
+import com.example.go2play.data.repository.FieldRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+data class OrganizeEventState(
+    val isLoading: Boolean = false,
+    val field: Field? = null,
+    val selectedDate: LocalDate? = null,
+    val selectedTimeSlot: String? = null,
+    val availableSlots: List<TimeSlot> = emptyList(),
+    val bookedSlots: Set<String> = emptySet(),
+    val showDateTimePicker: Boolean = false,
+    val description: String = "",
+    val error: String? = null,
+    val isCreating: Boolean = false
+)
+
+class OrganizeEventViewModel(
+    private val eventRepository: EventRepository = EventRepository(),
+    private val fieldRepository: FieldRepository = FieldRepository()
+): ViewModel() {
+
+    private val _eventState = MutableStateFlow(OrganizeEventState())
+    val eventState: StateFlow<OrganizeEventState> = _eventState.asStateFlow()
+    
+    private val dateFormatter = org.threeten.bp.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    fun loadField(fieldId: String) {
+        viewModelScope.launch {
+            _eventState.value = _eventState.value.copy(isLoading = true, error = null)
+
+            val result = fieldRepository.getFieldById(fieldId)
+            result.fold(
+                onSuccess = { field ->
+                    _eventState.value = _eventState.value.copy(
+                        isLoading = false,
+                        field = field,
+                        error = null
+                    )
+                },
+                onFailure = { exception ->
+                    _eventState.value = _eventState.value.copy(
+                        isLoading = false,
+                        error = exception.message ?: "Error loading field"
+                    )
+                }
+            )
+        }
+    }
+
+    fun toggleDateTimePicker() {
+        _eventState.value = _eventState.value.copy(
+            showDateTimePicker = !_eventState.value.showDateTimePicker
+        )
+    }
+
+    fun selectDate(date: LocalDate) {
+        _eventState.value = _eventState.value.copy(
+            selectedDate = date,
+            selectedTimeSlot = null
+        )
+        loadAvailableSlots(date)
+    }
+
+    private fun loadAvailableSlots(date: LocalDate) {
+        val field = _eventState.value.field ?: return
+
+        viewModelScope.launch {
+            _eventState.value = _eventState.value.copy(isLoading = true)
+
+            val dateString = date.format(dateFormatter)
+            val result = eventRepository.getEventsByFieldAndDate(field.id, dateString)
+
+            result.fold(
+                onSuccess = { events ->
+                    val bookedSlots = events.map { it.timeSlot }.toSet()
+                    val allSlots = TimeSlots.generateSlots()
+
+                    val availableSlots = allSlots.map { slot ->
+                        TimeSlot(
+                            startTime = slot.split("-")[0],
+                            endTime = slot.split("-")[1],
+                            status = when {
+                                slot in bookedSlots -> SlotStatus.BOOKED
+                                slot == _eventState.value.selectedTimeSlot -> SlotStatus.SELECTED
+                                else -> SlotStatus.AVAILABLE
+                            }
+                        )
+                    }
+
+                    _eventState.value = _eventState.value.copy(
+                        isLoading = false,
+                        availableSlots = availableSlots,
+                        bookedSlots = bookedSlots,
+                        error = null
+                    )
+                },
+                onFailure = { exception ->
+                    _eventState.value = _eventState.value.copy(
+                        isLoading = false,
+                        error = exception.message ?: "Error loading slots"
+                    )
+                }
+            )
+        }
+    }
+
+    fun selectTimeSlot(slot: String) {
+        if (slot in _eventState.value.bookedSlots) return
+
+        _eventState.value = _eventState.value.copy(selectedTimeSlot = slot)
+
+        // Aggiorna lo stato degli slot
+        val updatedSlots = _eventState.value.availableSlots.map { timeSlot ->
+            timeSlot.copy(
+                status = when {
+                    timeSlot.displayTime in _eventState.value.bookedSlots -> SlotStatus.BOOKED
+                    timeSlot.displayTime == slot -> SlotStatus.SELECTED
+                    else -> SlotStatus.AVAILABLE
+                }
+            )
+        }
+
+        _eventState.value = _eventState.value.copy(availableSlots = updatedSlots)
+    }
+
+    fun updateDescription(description: String) {
+        _eventState.value = _eventState.value.copy(description = description)
+    }
+
+    fun createEvent(onSuccess: () -> Unit) {
+        val field = _eventState.value.field
+        val date = _eventState.value.selectedDate
+        val timeSlot = _eventState.value.selectedTimeSlot
+        val userId = eventRepository.getCurrentUserId()
+
+        if (field == null || date == null || timeSlot == null || userId == null) {
+            _eventState.value = _eventState.value.copy(
+                error = "Please select date and time"
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _eventState.value = _eventState.value.copy(isCreating = true, error = null)
+
+            val eventCreate = EventCreate(
+                fieldId = field.id,
+                organizerId = userId,
+                date = date.format(dateFormatter),
+                timeSlot = timeSlot,
+                maxPlayers = field.playerCapacity * 2, // es. 5v5 = 10 giocatori
+                description = _eventState.value.description.ifBlank { null }
+            )
+
+            val result = eventRepository.createEvent(eventCreate)
+
+            result.fold(
+                onSuccess = {
+                    _eventState.value = _eventState.value.copy(isCreating = false)
+                    onSuccess()
+                },
+                onFailure = { exception ->
+                    _eventState.value = _eventState.value.copy(
+                        isCreating = false,
+                        error = exception.message ?: "Error creating event"
+                    )
+                }
+            )
+        }
+    }
+
+    fun canCreateEvent(): Boolean {
+        return _eventState.value.field != null &&
+                _eventState.value.selectedDate != null &&
+                _eventState.value.selectedTimeSlot != null &&
+                !_eventState.value.isCreating
+    }
+
+    fun clearError() {
+        _eventState.value = _eventState.value.copy(error = null)
+    }
+}

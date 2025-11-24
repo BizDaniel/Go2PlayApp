@@ -20,6 +20,7 @@ import androidx.navigation.navArgument
 import com.example.go2play.ui.auth.AuthViewModel
 import com.example.go2play.ui.auth.LoginScreen
 import com.example.go2play.ui.auth.SignUpScreen
+import com.example.go2play.ui.event.OrganizeEventScreen
 import com.example.go2play.ui.explore.ExploreScreen
 import com.example.go2play.ui.groups.CreateGroupScreen
 import com.example.go2play.ui.groups.GroupDetailScreen
@@ -38,6 +39,7 @@ sealed class Screen(val route: String) {
     object CreateGroup : Screen("create_group")
     object MyGroups : Screen("my_groups")
     object DetailGroup : Screen("detail_group")
+    object OrganizeEvent : Screen("organize_event")
 }
 
 @Composable
@@ -113,7 +115,7 @@ fun AppNavHost(navController: NavHostController) {
             MainScaffold(navController, Screen.Explore.route) {
                 ExploreScreen(
                     onFieldClick = { field ->
-                        // TODO: Navigare ai dettagli del campo
+                        navController.navigate(Screen.OrganizeEvent.route + "/${field.id}")
                     }
                 )
             }
@@ -174,6 +176,25 @@ fun AppNavHost(navController: NavHostController) {
                 if(groupId != null) {
                     GroupDetailScreen(
                         groupId = groupId,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                } else {
+                    navController.popBackStack()
+                }
+            }
+        }
+
+        composable(
+            route = Screen.OrganizeEvent.route + "/{fieldId}",
+            arguments = listOf(navArgument("fieldId") { type = NavType.StringType })
+        ) { backStackEntry ->
+
+            val fieldId = backStackEntry.arguments?.getString("fieldId")
+
+            MainScaffold(navController, Screen.OrganizeEvent.route) {
+                if(fieldId != null) {
+                    OrganizeEventScreen(
+                        fieldId = fieldId,
                         onNavigateBack = { navController.popBackStack() }
                     )
                 } else {
