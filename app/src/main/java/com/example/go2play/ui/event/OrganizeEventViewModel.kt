@@ -6,10 +6,12 @@ import com.example.go2play.data.model.EventCreate
 import com.example.go2play.data.model.TimeSlot
 import org.threeten.bp.LocalDate
 import com.example.go2play.data.model.Field
+import com.example.go2play.data.model.Group
 import com.example.go2play.data.model.SlotStatus
 import com.example.go2play.data.model.TimeSlots
 import com.example.go2play.data.repository.EventRepository
 import com.example.go2play.data.repository.FieldRepository
+import com.example.go2play.data.repository.GroupRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,13 +26,18 @@ data class OrganizeEventState(
     val bookedSlots: Set<String> = emptySet(),
     val showDateTimePicker: Boolean = false,
     val description: String = "",
+    val isPrivate: Boolean = false,
+    val selectedGroup: Group? = null,
+    val userGroups: List<Group> = emptyList(),
+    val showGroupPicker: Boolean = false,
     val error: String? = null,
     val isCreating: Boolean = false
 )
 
 class OrganizeEventViewModel(
     private val eventRepository: EventRepository = EventRepository(),
-    private val fieldRepository: FieldRepository = FieldRepository()
+    private val fieldRepository: FieldRepository = FieldRepository(),
+    private val groupRepository: GroupRepository = GroupRepository()
 ): ViewModel() {
 
     private val _eventState = MutableStateFlow(OrganizeEventState())
@@ -42,13 +49,28 @@ class OrganizeEventViewModel(
         viewModelScope.launch {
             _eventState.value = _eventState.value.copy(isLoading = true, error = null)
 
-            val result = fieldRepository.getFieldById(fieldId)
-            result.fold(
+            val fieldResult = fieldRepository.getFieldById(fieldId)
+            val groupResult = groupRepository.getUserGroups()
+
+            fieldResult.fold(
                 onSuccess = { field ->
-                    _eventState.value = _eventState.value.copy(
-                        isLoading = false,
-                        field = field,
-                        error = null
+                    groupResult.fold(
+                        onSuccess = { groups ->
+                            _eventState.value = _eventState.value.copy(
+                                isLoading = false,
+                                field = field,
+                                userGroups = groups,
+                                error = null
+                            )
+                        },
+                        onFailure = { exception ->
+                            _eventState.value = _eventState.value.copy(
+                                isLoading = false,
+                                field = field,
+                                userGroups = emptyList(),
+                                error = null
+                            )
+                        }
                     )
                 },
                 onFailure = { exception ->
@@ -64,6 +86,12 @@ class OrganizeEventViewModel(
     fun toggleDateTimePicker() {
         _eventState.value = _eventState.value.copy(
             showDateTimePicker = !_eventState.value.showDateTimePicker
+        )
+    }
+
+    fun toggleGroupPicker() {
+        _eventState.value = _eventState.value.copy(
+            showGroupPicker = !_eventState.value.showGroupPicker
         )
     }
 
@@ -141,6 +169,24 @@ class OrganizeEventViewModel(
         _eventState.value = _eventState.value.copy(description = description)
     }
 
+    fun togglePrivacy(isPrivate: Boolean) {
+        _eventState.value = _eventState.value.copy(
+            isPrivate = isPrivate,
+            selectedGroup = if (!isPrivate) null else _eventState.value.selectedGroup
+        )
+    }
+
+    fun selectGroup(group: Group) {
+        _eventState.value = _eventState.value.copy(
+            selectedGroup = group,
+            showGroupPicker = true
+        )
+    }
+
+    fun removeSelectedGroup() {
+        _eventState.value = _eventState.value.copy(selectedGroup = null)
+    }
+
     fun createEvent(onSuccess: () -> Unit) {
         val field = _eventState.value.field
         val date = _eventState.value.selectedDate
@@ -154,6 +200,12 @@ class OrganizeEventViewModel(
             return
         }
 
+        if (_eventState.value.isPrivate && _eventState.value.selectedGroup == null) {
+            _eventState.value = _eventState.value.copy(
+                error = "Please select a group for private events"
+            )
+            return
+        }
         viewModelScope.launch {
             _eventState.value = _eventState.value.copy(isCreating = true, error = null)
 
@@ -163,6 +215,8 @@ class OrganizeEventViewModel(
                 date = date.format(dateFormatter),
                 timeSlot = timeSlot,
                 maxPlayers = field.playerCapacity * 2, // es. 5v5 = 10 giocatori
+                isPrivate = _eventState.value.isPrivate,
+                groupId = _eventState.value.selectedGroup?.id,
                 description = _eventState.value.description.ifBlank { null }
             )
 
@@ -187,6 +241,7 @@ class OrganizeEventViewModel(
         return _eventState.value.field != null &&
                 _eventState.value.selectedDate != null &&
                 _eventState.value.selectedTimeSlot != null &&
+                (!_eventState.value.isPrivate || _eventState.value.selectedGroup != null) &&
                 !_eventState.value.isCreating
     }
 
