@@ -19,6 +19,10 @@ data class Event(
     @SerialName("current_players")
     val currentPlayers: List<String> = emptyList(),
     val description: String? = null,
+    @SerialName("is_public")
+    val is_public: Boolean = true,
+    @SerialName("group_id")
+    val group_id: String? = null,
     @SerialName("created_at")
     val createdAt: String? = null
 )
@@ -49,7 +53,11 @@ data class EventCreate(
     val timeSlot: String,
     @SerialName("max_players")
     val maxPlayers: Int,
-    val description: String? = null
+    val description: String? = null,
+    @SerialName("is_private")
+    val isPrivate: Boolean = false,
+    @SerialName("group_id")
+    val groupId: String? = null
 )
 
 // Time slot disponibili

@@ -68,8 +68,8 @@ class AuthRepository {
         return try {
             // Supabase Kotlin gestisce automaticamente il refresh del token
             // Basta verificare se esiste una sessione valida
-            val hasSession = client.auth.currentSessionOrNull() != null
-            Result.success(hasSession)
+            val session = client.auth.currentSessionOrNull()
+            Result.success(session != null)
         } catch (e: Exception) {
             Result.failure(e)
         }

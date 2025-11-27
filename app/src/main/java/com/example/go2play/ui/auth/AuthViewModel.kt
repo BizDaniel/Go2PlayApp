@@ -58,12 +58,6 @@ class AuthViewModel(
                 }
             )
         }
-        val isLoggedIn = authRepository.isUserLoggedIn()
-        val email = authRepository.getCurrentUSerEmail()
-        _authState.value = _authState.value.copy(
-            isAuthenticated = isLoggedIn,
-            userEmail = email
-        )
     }
 
     fun checkUsernameAvailability(username: String) {

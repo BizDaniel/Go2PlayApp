@@ -88,4 +88,6 @@ dependencies {
     implementation("com.jakewharton.threetenabp:threetenabp:1.4.6")
 
     implementation("androidx.compose.foundation:foundation:1.5.0")
+
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }
