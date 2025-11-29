@@ -23,16 +23,25 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.go2play.ui.notifications.NotificationViewModel
 import com.example.go2play.ui.profile.ProfileViewModel
 
 @Composable
 fun HomeScreen(
     profileViewModel: ProfileViewModel = viewModel(),
+    notificationViewModel: NotificationViewModel = viewModel(),
     onNavigateToCreateGroup: () -> Unit = {},
-    onNavigateToMyGroups: () -> Unit = {}
+    onNavigateToMyGroups: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     val profileState by profileViewModel.profileState.collectAsStateWithLifecycle()
+    val notificationState by notificationViewModel.notificationState.collectAsStateWithLifecycle()
     val profile = profileState.profile
+
+    // Ricarica le notifiche quando la schermata diventa visibile
+    LaunchedEffect(Unit) {
+        notificationViewModel.loadNotifications()
+    }
 
     Column(
         modifier = Modifier
@@ -186,21 +195,14 @@ fun HomeScreen(
             ModernCard(
                 icon = Icons.Default.Notifications,
                 title = "Notifications",
-                subtitle = "Check your latest updates",
+                subtitle = if (notificationState.pendingCount > 0) {
+                    "${notificationState.pendingCount} pending invitation${if (notificationState.pendingCount > 1) "s" else ""}"
+                } else {
+                    "Check your latest updates"
+                },
                 iconColor = Color(0xFFFF9800),
-                onClick = { /* TODO */ }
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Card Inviti
-            ModernCard(
-                icon = Icons.Default.MailOutline,
-                title = "Invitations",
-                subtitle = "2 pending invitations",
-                iconColor = Color(0xFF2196F3),
-                badge = "2",
-                onClick = { /* TODO */ }
+                badge = if (notificationState.pendingCount > 0) notificationState.pendingCount.toString() else null,
+                onClick = onNavigateToNotifications
             )
         }
     }

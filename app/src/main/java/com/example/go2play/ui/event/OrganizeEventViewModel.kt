@@ -2,6 +2,7 @@ package com.example.go2play.ui.event
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.go2play.data.model.Event
 import com.example.go2play.data.model.EventCreate
 import com.example.go2play.data.model.TimeSlot
 import org.threeten.bp.LocalDate
@@ -12,6 +13,8 @@ import com.example.go2play.data.model.TimeSlots
 import com.example.go2play.data.repository.EventRepository
 import com.example.go2play.data.repository.FieldRepository
 import com.example.go2play.data.repository.GroupRepository
+import com.example.go2play.data.repository.NotificationRepository
+import com.example.go2play.data.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -223,9 +226,13 @@ class OrganizeEventViewModel(
             val result = eventRepository.createEvent(eventCreate)
 
             result.fold(
-                onSuccess = {
-                    _eventState.value = _eventState.value.copy(isCreating = false)
-                    onSuccess()
+                onSuccess = { createdEvent ->
+                    if(_eventState.value.isPrivate && _eventState.value.selectedGroup != null) {
+                        createNotificationsForGroup(createdEvent, field, userId, onSuccess)
+                    } else {
+                        _eventState.value = _eventState.value.copy(isCreating = false)
+                        onSuccess()
+                    }
                 },
                 onFailure = { exception ->
                     _eventState.value = _eventState.value.copy(
@@ -235,6 +242,56 @@ class OrganizeEventViewModel(
                 }
             )
         }
+    }
+
+    private suspend fun createNotificationsForGroup(
+        event: Event,
+        field: Field,
+        organizerId: String,
+        onSuccess: () -> Unit
+    ) {
+        val group = _eventState.value.selectedGroup ?: return
+        val notificationRepository = NotificationRepository()
+        val profileRepository = ProfileRepository()
+
+        // Ottieni il nome dell'organizzatore
+        val organizerProfile = profileRepository.getUserProfile(organizerId).getOrNull()
+        val organizerName = organizerProfile?.username ?: "Someone"
+
+        // Filtra i membri del gruppo escludendo l'organizzatore
+        val membersToNotify = group.memberIDs.filter { it != organizerId }
+
+        if (membersToNotify.isEmpty()) {
+            _eventState.value = _eventState.value.copy(isCreating = false)
+            onSuccess()
+            return
+        }
+
+        // Crea le notifiche
+        val title = "New Event Invitation"
+        val message = "$organizerName invited you to play at ${field.name} on ${event.date} at ${event.timeSlot}"
+
+        val result = notificationRepository.createNotificationsForGroup(
+            userIds = membersToNotify,
+            eventId = event.id,
+            title = title,
+            message = message
+        )
+
+        result.fold(
+            onSuccess = {
+                _eventState.value = _eventState.value.copy(isCreating = false)
+                onSuccess()
+            },
+            onFailure = { exception ->
+                // Anche se le notifiche falliscono, l'evento è stato creato con successo
+                _eventState.value = _eventState.value.copy(
+                    isCreating = false,
+                    error = "Event created but notifications failed: ${exception.message}"
+                )
+                onSuccess()
+            }
+        )
     }
 
     fun canCreateEvent(): Boolean {
