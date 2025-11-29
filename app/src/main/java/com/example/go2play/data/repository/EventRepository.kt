@@ -16,7 +16,7 @@ class EventRepository {
             val events = client.from("events")
                 .select {
                     filter {
-                        eq("id", fieldId)
+                        eq("field_id", fieldId)
                         eq("date", date)
                     }
                 }
@@ -38,7 +38,7 @@ class EventRepository {
             val events = client.from("events")
                 .select {
                     filter {
-                        eq("id", fieldId)
+                        eq("field_id", fieldId)
                         gte("date", startDate)
                         lte("date", endDate)
                     }
@@ -56,7 +56,9 @@ class EventRepository {
     suspend fun createEvent(eventCreate: EventCreate): Result<Event> {
         return try {
             val createdEvent = client.from("events")
-                .insert(eventCreate)
+                .insert(eventCreate) {
+                    select()
+                }
                 .decodeSingle<Event>()
 
             Result.success(createdEvent)

@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,9 +37,8 @@ import kotlinx.coroutines.launch
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object SignUp : Screen("signup")
-    object Home : Screen("home")
-    object Explore : Screen("explore")
-    object Profile : Screen("profile")
+    object Main : Screen("main")
+
     object EditProfile : Screen("edit_profile")
     object CreateGroup : Screen("create_group")
     object MyGroups : Screen("my_groups")
@@ -65,29 +65,28 @@ fun AppNavHost(navController: NavHostController) {
 
     // Determina la destinazione di start in base allo stato di autenticazione
     val startDestination = if (authState.isAuthenticated) {
-        Screen.Home.route
+        Screen.Main.route
     } else {
         Screen.Login.route
     }
 
-    // Osserva lo stato di autenticazione e reindirizza al login se necessario
+    // se si disconnette → torna al login
     LaunchedEffect(authState.isAuthenticated) {
-        if (!authState.isAuthenticated &&
-            navController.currentDestination?.route != Screen.Login.route &&
-            navController.currentDestination?.route != Screen.SignUp.route) {
+        if (!authState.isAuthenticated) {
             navController.navigate(Screen.Login.route) {
                 popUpTo(0) { inclusive = true }
             }
         }
     }
 
-    NavHost(navController = navController, startDestination = Screen.Login.route) {
+    NavHost(navController = navController, startDestination = startDestination) {
+
         composable(Screen.Login.route) {
             LoginScreen(
                 viewModel = authViewModel,
                 onNavigateToSignUp = { navController.navigate(Screen.SignUp.route) },
                 onLoginSuccess = {
-                    navController.navigate(Screen.Home.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
@@ -99,72 +98,19 @@ fun AppNavHost(navController: NavHostController) {
                 viewModel = authViewModel,
                 onNavigateToLogin = { navController.popBackStack() },
                 onSignUpSuccess = {
-                    navController.navigate(Screen.Home.route) {
+                    navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.SignUp.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable(Screen.Home.route) {
-            MainScaffoldWithPager(
-                navController = navController,
-                initialPage = 1, // Home è al centro
-                onNavigateToCreateGroup = { navController.navigate(Screen.CreateGroup.route) },
-                onNavigateToMyGroups = { navController.navigate(Screen.MyGroups.route) },
-                onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
-                onLogout = {
-                    authViewModel.signOut()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                },
-                onFieldClick = { field ->
-                    navController.navigate(Screen.OrganizeEvent.route + "/${field.id}")
-                }
-            )
-        }
-
-        composable(Screen.Explore.route) {
-            MainScaffoldWithPager(
-                navController = navController,
-                initialPage = 0, // Explore è a sinistra
-                onNavigateToCreateGroup = { navController.navigate(Screen.CreateGroup.route) },
-                onNavigateToMyGroups = { navController.navigate(Screen.MyGroups.route) },
-                onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
-                onLogout = {
-                    authViewModel.signOut()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                },
-                onFieldClick = { field ->
-                    navController.navigate(Screen.OrganizeEvent.route + "/${field.id}")
-                }
-            )
-        }
-
-        composable(Screen.Profile.route) {
-            MainScaffoldWithPager(
-                navController = navController,
-                initialPage = 2, // Profile è a destra
-                onNavigateToCreateGroup = { navController.navigate(Screen.CreateGroup.route) },
-                onNavigateToMyGroups = { navController.navigate(Screen.MyGroups.route) },
-                onNavigateToEdit = { navController.navigate(Screen.EditProfile.route) },
-                onLogout = {
-                    authViewModel.signOut()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                },
-                onFieldClick = { field ->
-                    navController.navigate(Screen.OrganizeEvent.route + "/${field.id}")
-                }
-            )
+        composable(Screen.Main.route) {
+            MainScreen(navController = navController, authViewModel = authViewModel)
         }
 
         composable(Screen.EditProfile.route) {
-            MainScaffold(navController, Screen.EditProfile.route) {
+            SimpleScaffold(navController, Screen.EditProfile.route) {
                 EditProfileScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -172,7 +118,7 @@ fun AppNavHost(navController: NavHostController) {
         }
 
         composable(Screen.CreateGroup.route) {
-            MainScaffold(navController, Screen.CreateGroup.route) {
+            SimpleScaffold(navController, Screen.CreateGroup.route) {
                 CreateGroupScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onGroupCreated = {
@@ -183,7 +129,7 @@ fun AppNavHost(navController: NavHostController) {
         }
 
         composable(Screen.MyGroups.route) {
-            MainScaffold(navController, Screen.MyGroups.route) {
+            SimpleScaffold(navController, Screen.MyGroups.route) {
                 MyGroupsScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onGroupClick = { group ->
@@ -200,7 +146,7 @@ fun AppNavHost(navController: NavHostController) {
 
             val groupId = backStackEntry.arguments?.getString("groupId")
 
-            MainScaffold(navController, Screen.DetailGroup.route) {
+            SimpleScaffold(navController, Screen.DetailGroup.route) {
                 if(groupId != null) {
                     GroupDetailScreen(
                         groupId = groupId,
@@ -219,7 +165,7 @@ fun AppNavHost(navController: NavHostController) {
 
             val fieldId = backStackEntry.arguments?.getString("fieldId")
 
-            MainScaffold(navController, Screen.OrganizeEvent.route) {
+            SimpleScaffold(navController, "organize_event") {
                 if(fieldId != null) {
                     OrganizeEventScreen(
                         fieldId = fieldId,
@@ -234,89 +180,28 @@ fun AppNavHost(navController: NavHostController) {
 }
 
 @Composable
-private fun MainScaffold(
+private fun MainScreen(
     navController: NavHostController,
-    currentRoute: String,
-    content: @Composable () -> Unit
+    authViewModel: AuthViewModel
 ) {
-    Scaffold(
-        bottomBar = {
-            BottomNavigationBar(
-                selectedRoute = currentRoute,
-                onNavigate = { route ->
-                    navController.navigate(route) {
-                        // Evita di accumulare troppi backstack
-                        popUpTo(Screen.Home.route) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        androidx.compose.foundation.layout.Box(
-            modifier = Modifier.padding(padding)
-        ) {
-            content()
-        }
-    }
-}
-
-@Composable
-private fun MainScaffoldWithPager(
-    navController: NavHostController,
-    initialPage: Int,
-    onNavigateToCreateGroup: () -> Unit,
-    onNavigateToMyGroups: () -> Unit,
-    onNavigateToEdit: () -> Unit,
-    onLogout: () -> Unit,
-    onFieldClick: (com.example.go2play.data.model.Field) -> Unit
-) {
-    val pagerState = rememberPagerState(
-        initialPage = initialPage,
-        pageCount = { 3 }
-    )
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
     val coroutineScope = rememberCoroutineScope()
-
-    // Sincronizza il pager con la navigation
-    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
-        if (!pagerState.isScrollInProgress) {
-            val route = when (pagerState.currentPage) {
-                0 -> Screen.Explore.route
-                1 -> Screen.Home.route
-                2 -> Screen.Profile.route
-                else -> Screen.Home.route
-            }
-
-            if(navController.currentDestination?.route != route) {
-                navController.navigate(route) {
-                    popUpTo(Screen.Home.route) {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            }
-        }
-    }
 
     Scaffold(
         bottomBar = {
             BottomNavigationBar(
                 selectedRoute = when (pagerState.currentPage) {
-                    0 -> Screen.Explore.route
-                    1 -> Screen.Home.route
-                    2 -> Screen.Profile.route
-                    else -> Screen.Home.route
+                    0 -> "explore"
+                    1 -> "home"
+                    2 -> "profile"
+                    else -> "home"
                 },
                 onNavigate = { route ->
                     coroutineScope.launch {
                         val page = when (route) {
-                            Screen.Explore.route -> 0
-                            Screen.Home.route -> 1
-                            Screen.Profile.route -> 2
+                            "explore" -> 0
+                            "home" -> 1
+                            "profile" -> 2
                             else -> 1
                         }
                         pagerState.animateScrollToPage(page)
@@ -325,24 +210,55 @@ private fun MainScaffoldWithPager(
             )
         }
     ) { padding ->
+
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            userScrollEnabled = true // Abilita lo swipe
+                .padding(padding)
         ) { page ->
+
             when (page) {
-                0 -> ExploreScreen(onFieldClick = onFieldClick)
-                1 -> HomeScreen(
-                    onNavigateToCreateGroup = onNavigateToCreateGroup,
-                    onNavigateToMyGroups = onNavigateToMyGroups
+                0 -> ExploreScreen(
+                    onFieldClick = { field ->
+                        navController.navigate(Screen.OrganizeEvent.route + "/${field.id}")
+                    }
                 )
+
+                1 -> HomeScreen(
+                    onNavigateToCreateGroup = {
+                        navController.navigate(Screen.CreateGroup.route)
+                    },
+                    onNavigateToMyGroups = {
+                        navController.navigate(Screen.MyGroups.route)
+                    }
+                )
+
                 2 -> ProfileScreen(
-                    onNavigateToEdit = onNavigateToEdit,
-                    onLogout = onLogout
+                    onNavigateToEdit = {
+                        navController.navigate(Screen.EditProfile.route)
+                    },
+                    onLogout = {
+                        authViewModel.signOut()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun SimpleScaffold(
+    navController: NavHostController,
+    currentRoute: String,
+    content: @Composable () -> Unit
+) {
+    Scaffold { padding ->
+        Box(modifier = Modifier.padding(padding)) {
+            content()
         }
     }
 }
