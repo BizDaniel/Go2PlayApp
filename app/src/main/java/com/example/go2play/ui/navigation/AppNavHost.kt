@@ -30,6 +30,7 @@ import com.example.go2play.ui.groups.CreateGroupScreen
 import com.example.go2play.ui.groups.GroupDetailScreen
 import com.example.go2play.ui.groups.MyGroupsScreen
 import com.example.go2play.ui.home.HomeScreen
+import com.example.go2play.ui.notifications.NotificationScreen
 import com.example.go2play.ui.profile.EditProfileScreen
 import com.example.go2play.ui.profile.ProfileScreen
 import kotlinx.coroutines.launch
@@ -44,6 +45,7 @@ sealed class Screen(val route: String) {
     object MyGroups : Screen("my_groups")
     object DetailGroup : Screen("detail_group")
     object OrganizeEvent : Screen("organize_event")
+    object Notifications : Screen("notifications")
 }
 
 @Composable
@@ -176,6 +178,14 @@ fun AppNavHost(navController: NavHostController) {
                 }
             }
         }
+
+        composable(Screen.Notifications.route) {
+            SimpleScaffold(navController, Screen.Notifications.route) {
+                NotificationScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
     }
 }
 
@@ -231,6 +241,9 @@ private fun MainScreen(
                     },
                     onNavigateToMyGroups = {
                         navController.navigate(Screen.MyGroups.route)
+                    },
+                    onNavigateToNotifications = {
+                        navController.navigate(Screen.Notifications.route)
                     }
                 )
 
