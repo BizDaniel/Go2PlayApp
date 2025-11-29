@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 
 data class ProfileState(
     val isLoading: Boolean = false,
+    val isInitialLoad: Boolean = true,
     val profile: UserProfile? = null,
     val error: String? = null,
     val isUploading: Boolean = false,
@@ -24,18 +25,25 @@ class ProfileViewModel(
     val profileState: StateFlow<ProfileState> = _profileState.asStateFlow()
 
     init {
-        loadProfile()
+        loadProfile(isInitial = true)
     }
 
-    fun loadProfile() {
+    fun loadProfile(isInitial: Boolean = false) {
         viewModelScope.launch {
-            _profileState.value = _profileState.value.copy(isLoading = true, error = null)
+            if(isInitial && _profileState.value.profile != null) {
+                return@launch
+            }
+            _profileState.value = _profileState.value.copy(
+                isLoading = isInitial,
+                isInitialLoad = isInitial,
+                error = null)
 
             val userId = repository.getCurrentUserId()
             if (userId == null) {
                 _profileState.value = _profileState.value.copy(
                     isLoading = false,
-                    error = "Utente non autenticato"
+                    isInitialLoad = false,
+                    error = "User not authenticated"
                 )
                 return@launch
             }
@@ -45,6 +53,7 @@ class ProfileViewModel(
                 onSuccess = { profile ->
                     _profileState.value = _profileState.value.copy(
                         isLoading = false,
+                        isInitialLoad = false,
                         profile = profile,
                         error = null
                     )
@@ -52,7 +61,8 @@ class ProfileViewModel(
                 onFailure = { exception ->
                     _profileState.value = _profileState.value.copy(
                         isLoading = false,
-                        error = exception.message ?: "Errore nel caricamento del profilo"
+                        isInitialLoad = false,
+                        error = exception.message ?: "Error in user profile loading"
                     )
                 }
             )
@@ -81,16 +91,29 @@ class ProfileViewModel(
 
             result.fold(
                 onSuccess = {
-                    loadProfile() // Ricarica il profilo aggiornato
+                    refreshProfile() // Ricarica il profilo aggiornato
                     onUpdateSuccess()
                 },
                 onFailure = { exception ->
                     _profileState.value = _profileState.value.copy(
                         isLoading = false,
-                        error = exception.message ?: "Errore nell'aggiornamento del profilo"
+                        error = exception.message ?: "Error in profile updating"
                     )
                 }
             )
+        }
+    }
+
+    fun refreshProfile() {
+        viewModelScope.launch {
+            val userId = repository.getCurrentUserId() ?: return@launch
+            val result = repository.getUserProfile(userId)
+            result.onSuccess { profile ->
+                _profileState.value = _profileState.value.copy(
+                    profile = profile,
+                    error = null
+                )
+            }
         }
     }
 
@@ -121,12 +144,12 @@ class ProfileViewModel(
                                 isUploading = false,
                                 uploadSuccess = true
                             )
-                            loadProfile()
+                            refreshProfile()
                         },
                         onFailure = { exception ->
                             _profileState.value = _profileState.value.copy(
                                 isUploading = false,
-                                error = exception.message ?: "Errore nell'aggiornamento dell'avatar"
+                                error = exception.message ?: "Error in avatar updating"
                             )
                         }
                     )
@@ -134,7 +157,7 @@ class ProfileViewModel(
                 onFailure = { exception ->
                     _profileState.value = _profileState.value.copy(
                         isUploading = false,
-                        error = exception.message ?: "Errore nell'upload dell'immagine"
+                        error = exception.message ?: "Error in image updating"
                     )
                 }
             )

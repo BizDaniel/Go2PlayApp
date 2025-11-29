@@ -1,5 +1,8 @@
 package com.example.go2play.ui.profile
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -31,9 +34,22 @@ fun ProfileScreen(
     val profile = profileState.profile
 
     val lifecycleOwner = LocalLifecycleOwner.current
+    var hasNavigatedAway by remember { mutableStateOf(false) }
 
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.currentStateFlow.collect { state ->
+            when(state) {
+                Lifecycle.State.RESUMED -> {
+                    if (hasNavigatedAway) {
+                        viewModel.refreshProfile()
+                        hasNavigatedAway = false
+                    }
+                }
+                Lifecycle.State.STARTED -> {
+                    hasNavigatedAway = true
+                }
+                else -> {}
+            }
             // Quando lo schermo torna "RESUMED" (es. tornando da EditProfileScreen)
             if (state == Lifecycle.State.RESUMED) {
                 // Ricarica il profilo
@@ -55,12 +71,12 @@ fun ProfileScreen(
                 .padding(padding)
         ) {
             when {
-                profileState.isLoading -> {
+                profileState.isInitialLoad && profileState.isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                profileState.error != null -> {
+                profileState.error != null && profile == null -> {
                     Column(
                         modifier = Modifier
                             .align(Alignment.Center)
@@ -73,7 +89,7 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = { viewModel.loadProfile() }) {
-                            Text("Riprova")
+                            Text("Retry")
                         }
                     }
                 }
@@ -136,9 +152,9 @@ fun ProfileScreen(
                                 modifier = Modifier.padding(16.dp)
                             ) {
                                 ProfileInfoRow("Age", profile.age?.toString() ?: "Not specified")
-                                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                                 ProfileInfoRow("Level", profile.level ?: "Not specified")
-                                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                                 ProfileInfoRow("Preferred Roles", profile.preferredRoles ?: "Not specified")
                             }
                         }
@@ -168,6 +184,35 @@ fun ProfileScreen(
                         ) {
                             Text("Logout")
                         }
+                    }
+                }
+            }
+            AnimatedVisibility(
+                visible = !profileState.isInitialLoad && profileState.isLoading && profile != null,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    tonalElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Text(
+                            text = "Updating...",
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
