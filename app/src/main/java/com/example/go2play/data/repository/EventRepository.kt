@@ -85,6 +85,62 @@ class EventRepository {
         }
     }
 
+    suspend fun addPlayerToEvent(eventId: String, userId: String): Result<Unit> {
+        return try {
+            val event = client.from("events")
+                .select {
+                    filter {
+                        eq("id", eventId)
+                    }
+                }
+                .decodeSingle<Event>()
+            if (event.currentPlayers.contains(userId)) {
+                return Result.success(Unit) // Giocatore già presente, non fare nulla
+            }
+
+            // 3. Aggiungi il giocatore alla lista
+            val updatedPlayers = event.currentPlayers + userId
+
+            // 4. Aggiorna l'evento nel database
+            client.from("events")
+                .update(
+                    mapOf("current_players" to updatedPlayers)
+                ) {
+                    filter {
+                        eq("id", eventId)
+                    }
+                }
+
+            Log.d("EventRepository", "Player $userId added to event $eventId")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("EventRepository", "Error adding player to event", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getUserEvents(): Result<List<Event>> {
+        return try {
+            val userId = getCurrentUserId()
+                ?: return Result.failure(Exception("User not authenticated"))
+
+            // Cerca tutti gli eventi dove l'utente è presente in current_players
+            val events = client.from("events")
+                .select {
+                    filter {
+                        contains("current_players", listOf(userId))
+                    }
+                }
+                .decodeList<Event>()
+
+            Log.d("EventRepository", "Found ${events.size} events for user $userId")
+            Result.success(events)
+        } catch (e: Exception) {
+            Log.e("EventRepository", "Error getting user events", e)
+            Result.failure(e)
+        }
+    }
+
     // Ottengo ID corrente utente
     fun getCurrentUserId(): String? {
         return client.auth.currentUserOrNull()?.id

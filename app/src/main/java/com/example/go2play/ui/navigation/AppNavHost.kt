@@ -25,6 +25,7 @@ import com.example.go2play.ui.auth.AuthViewModel
 import com.example.go2play.ui.auth.LoginScreen
 import com.example.go2play.ui.auth.SignUpScreen
 import com.example.go2play.ui.event.OrganizeEventScreen
+import com.example.go2play.ui.events.MyEventsScreen
 import com.example.go2play.ui.explore.ExploreScreen
 import com.example.go2play.ui.groups.CreateGroupScreen
 import com.example.go2play.ui.groups.GroupDetailScreen
@@ -46,6 +47,7 @@ sealed class Screen(val route: String) {
     object DetailGroup : Screen("detail_group")
     object OrganizeEvent : Screen("organize_event")
     object Notifications : Screen("notifications")
+    object MyEvents : Screen("my_events")
 }
 
 @Composable
@@ -186,6 +188,14 @@ fun AppNavHost(navController: NavHostController) {
                 )
             }
         }
+
+        composable(Screen.MyEvents.route) {
+            SimpleScaffold(navController, Screen.MyEvents.route) {
+                MyEventsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
     }
 }
 
@@ -244,7 +254,8 @@ private fun MainScreen(
                     },
                     onNavigateToNotifications = {
                         navController.navigate(Screen.Notifications.route)
-                    }
+                    },
+                    onNavigateToMyEvents = { navController.navigate(Screen.MyEvents.route)}
                 )
 
                 2 -> ProfileScreen(

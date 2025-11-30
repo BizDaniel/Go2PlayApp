@@ -227,6 +227,9 @@ class OrganizeEventViewModel(
 
             result.fold(
                 onSuccess = { createdEvent ->
+
+                    eventRepository.addPlayerToEvent(createdEvent.id, userId)
+
                     if(_eventState.value.isPrivate && _eventState.value.selectedGroup != null) {
                         createNotificationsForGroup(createdEvent, field, userId, onSuccess)
                     } else {
