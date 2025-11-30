@@ -32,7 +32,8 @@ fun HomeScreen(
     notificationViewModel: NotificationViewModel = viewModel(),
     onNavigateToCreateGroup: () -> Unit = {},
     onNavigateToMyGroups: () -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToMyEvents: () -> Unit = {}
 ) {
     val profileState by profileViewModel.profileState.collectAsStateWithLifecycle()
     val notificationState by notificationViewModel.notificationState.collectAsStateWithLifecycle()
@@ -153,7 +154,7 @@ fun HomeScreen(
                     label = "My Events",
                     color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.weight(1f),
-                    onClick = { /* TODO */ }
+                    onClick = onNavigateToMyEvents
                 )
             }
 
