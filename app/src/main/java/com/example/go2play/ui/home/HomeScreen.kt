@@ -33,7 +33,8 @@ fun HomeScreen(
     onNavigateToCreateGroup: () -> Unit = {},
     onNavigateToMyGroups: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
-    onNavigateToMyEvents: () -> Unit = {}
+    onNavigateToMyEvents: () -> Unit = {},
+    onNavigateToFindMatch: () -> Unit = {}
 ) {
     val profileState by profileViewModel.profileState.collectAsStateWithLifecycle()
     val notificationState by notificationViewModel.notificationState.collectAsStateWithLifecycle()
@@ -147,7 +148,7 @@ fun HomeScreen(
                     label = "Find Match",
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
-                    onClick = { /* TODO */ }
+                    onClick = onNavigateToFindMatch
                 )
                 EnhancedActionButton(
                     icon = Icons.Default.Event,
