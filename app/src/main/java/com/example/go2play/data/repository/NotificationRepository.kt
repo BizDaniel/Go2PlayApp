@@ -152,6 +152,17 @@ class NotificationRepository {
                     }
                 }
 
+
+            // Aggiorna lo stato della notifica
+            client.from("notifications")
+                .update(
+                    mapOf("status" to NotificationStatus.ACCEPTED.name.lowercase())
+                ) {
+                    filter {
+                        eq("id", notificationId)
+                    }
+                }
+
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e("NotificationRepository", "Error accepting invite", e)

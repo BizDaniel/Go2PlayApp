@@ -27,6 +27,7 @@ import com.example.go2play.ui.auth.SignUpScreen
 import com.example.go2play.ui.event.OrganizeEventScreen
 import com.example.go2play.ui.events.MyEventsScreen
 import com.example.go2play.ui.explore.ExploreScreen
+import com.example.go2play.ui.findmatch.FindMatchScreen
 import com.example.go2play.ui.groups.CreateGroupScreen
 import com.example.go2play.ui.groups.GroupDetailScreen
 import com.example.go2play.ui.groups.MyGroupsScreen
@@ -48,6 +49,7 @@ sealed class Screen(val route: String) {
     object OrganizeEvent : Screen("organize_event")
     object Notifications : Screen("notifications")
     object MyEvents : Screen("my_events")
+    object FindMatch : Screen("find_match")
 }
 
 @Composable
@@ -196,6 +198,14 @@ fun AppNavHost(navController: NavHostController) {
                 )
             }
         }
+
+        composable(Screen.FindMatch.route) {
+            SimpleScaffold(navController, Screen.FindMatch.route) {
+                FindMatchScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
     }
 }
 
@@ -255,7 +265,8 @@ private fun MainScreen(
                     onNavigateToNotifications = {
                         navController.navigate(Screen.Notifications.route)
                     },
-                    onNavigateToMyEvents = { navController.navigate(Screen.MyEvents.route)}
+                    onNavigateToMyEvents = { navController.navigate(Screen.MyEvents.route)},
+                    onNavigateToFindMatch = { navController.navigate(Screen.FindMatch.route)}
                 )
 
                 2 -> ProfileScreen(
