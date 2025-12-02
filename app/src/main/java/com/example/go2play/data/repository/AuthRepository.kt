@@ -31,8 +31,6 @@ class AuthRepository {
 
             profileRepository.createProfile(userId, email, username)
 
-            startAutoRefresh()
-
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -46,8 +44,6 @@ class AuthRepository {
                 this.email = email
                 this.password = password
             }
-
-            startAutoRefresh()
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -85,10 +81,6 @@ class AuthRepository {
             // Basta verificare se esiste una sessione valida
             val session = client.auth.currentSessionOrNull()
 
-            if(session != null) {
-                startAutoRefresh()
-            }
-
             Result.success(session != null)
         } catch (e: Exception) {
             Result.failure(e)
@@ -104,10 +96,10 @@ class AuthRepository {
         }
     }
 
-    private fun startAutoRefresh() {
+    internal fun startAutoRefresh(scope: CoroutineScope) {
         stopAutoRefresh()
 
-        refreshJob = CoroutineScope(Dispatchers.IO).launch {
+        refreshJob = scope.launch(Dispatchers.IO) {
             while (isActive) {
                 delay(50 * 60 * 1000L)
 

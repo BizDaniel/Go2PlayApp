@@ -1,5 +1,6 @@
 package com.example.go2play.ui.findmatch
 
+import androidx.compose.runtime.currentComposer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.go2play.data.model.Event
@@ -26,7 +27,8 @@ data class FindMatchState(
     val selectedDate: LocalDate? = null,
     val selectedFieldId: String? = null,
     val error: String? = null,
-    val isJoining: Boolean = false
+    val isJoining: Boolean = false,
+    val currentUserId: String? = null
 )
 
 class FindMatchViewModel(
@@ -34,18 +36,20 @@ class FindMatchViewModel(
     private val fieldRepository: FieldRepository = FieldRepository()
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(FindMatchState())
-    val state: StateFlow<FindMatchState> = _state.asStateFlow()
+    private val _findState = MutableStateFlow(FindMatchState())
+    val findState: StateFlow<FindMatchState> = _findState.asStateFlow()
 
     private val dateFormatter = org.threeten.bp.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
     init {
+        val userId = eventRepository.getCurrentUserId()
+        _findState.value = _findState.value.copy(currentUserId = userId)
         loadPublicEvents()
     }
 
     fun loadPublicEvents() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
+            _findState.value = _findState.value.copy(isLoading = true, error = null)
 
             // Carica tutti i campi
             val fieldsResult = fieldRepository.getAllFields()
@@ -84,7 +88,7 @@ class FindMatchViewModel(
             // Ordina per data
             val sortedEvents = allEventsWithFields.sortedBy { it.event.date }
 
-            _state.value = _state.value.copy(
+            _findState.value = _findState.value.copy(
                 isLoading = false,
                 events = sortedEvents,
                 allEvents = sortedEvents,
@@ -95,50 +99,50 @@ class FindMatchViewModel(
     }
 
     fun selectDate(date: LocalDate?) {
-        _state.value = _state.value.copy(selectedDate = date)
+        _findState.value = _findState.value.copy(selectedDate = date)
         applyFilters()
     }
 
     fun selectField(fieldId: String?) {
-        _state.value = _state.value.copy(selectedFieldId = fieldId)
+        _findState.value = _findState.value.copy(selectedFieldId = fieldId)
         applyFilters()
     }
 
     private fun applyFilters() {
-        var filtered = _state.value.allEvents
+        var filtered = _findState.value.allEvents
 
         // Filtra per data
-        _state.value.selectedDate?.let { date ->
+        _findState.value.selectedDate?.let { date ->
             filtered = filtered.filter { eventInfo ->
                 LocalDate.parse(eventInfo.event.date) == date
             }
         }
 
         // Filtra per campo
-        _state.value.selectedFieldId?.let { fieldId ->
+        _findState.value.selectedFieldId?.let { fieldId ->
             filtered = filtered.filter { eventInfo ->
                 eventInfo.field.id == fieldId
             }
         }
 
-        _state.value = _state.value.copy(events = filtered)
+        _findState.value = _findState.value.copy(events = filtered)
     }
 
     fun clearFilters() {
-        _state.value = _state.value.copy(
+        _findState.value = _findState.value.copy(
             selectedDate = null,
             selectedFieldId = null,
-            events = _state.value.allEvents
+            events = _findState.value.allEvents
         )
     }
 
     fun joinEvent(eventId: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isJoining = true, error = null)
+            _findState.value = _findState.value.copy(isJoining = true, error = null)
 
             val userId = eventRepository.getCurrentUserId()
             if (userId == null) {
-                _state.value = _state.value.copy(
+                _findState.value = _findState.value.copy(
                     isJoining = false,
                     error = "User not authenticated"
                 )
@@ -149,13 +153,13 @@ class FindMatchViewModel(
 
             result.fold(
                 onSuccess = {
-                    _state.value = _state.value.copy(isJoining = false)
+                    _findState.value = _findState.value.copy(isJoining = false)
                     // Ricarica gli eventi per aggiornare la lista
                     loadPublicEvents()
                     onSuccess()
                 },
                 onFailure = { exception ->
-                    _state.value = _state.value.copy(
+                    _findState.value = _findState.value.copy(
                         isJoining = false,
                         error = exception.message ?: "Error joining event"
                     )
@@ -165,6 +169,6 @@ class FindMatchViewModel(
     }
 
     fun clearError() {
-        _state.value = _state.value.copy(error = null)
+        _findState.value = _findState.value.copy(error = null)
     }
 }
