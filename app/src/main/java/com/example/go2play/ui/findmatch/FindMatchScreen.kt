@@ -30,14 +30,14 @@ fun FindMatchScreen(
     viewModel: FindMatchViewModel = viewModel(),
     onNavigateBack: () -> Unit
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val findState by viewModel.findState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedEvent by remember { mutableStateOf<EventWithFieldInfo?>(null) }
     var showFilters by remember { mutableStateOf(false) }
 
     // Mostra errori
-    LaunchedEffect(state.error) {
-        state.error?.let { error ->
+    LaunchedEffect(findState.error) {
+        findState.error?.let { error ->
             snackbarHostState.showSnackbar(error)
             viewModel.clearError()
         }
@@ -48,22 +48,23 @@ fun FindMatchScreen(
         EventDetailDialog(
             event = eventInfo.event,
             field = eventInfo.field,
+            currentUserId = findState.currentUserId,
             onDismiss = { selectedEvent = null },
             onJoin = {
                 viewModel.joinEvent(eventInfo.event.id) {
                     selectedEvent = null
                 }
             },
-            isJoining = state.isJoining
+            isJoining = findState.isJoining
         )
     }
 
     // Dialog filtri
     if (showFilters) {
         FiltersDialog(
-            selectedDate = state.selectedDate,
-            selectedFieldId = state.selectedFieldId,
-            availableFields = state.availableFields,
+            selectedDate = findState.selectedDate,
+            selectedFieldId = findState.selectedFieldId,
+            availableFields = findState.availableFields,
             onDateSelected = { viewModel.selectDate(it) },
             onFieldSelected = { viewModel.selectField(it) },
             onDismiss = { showFilters = false },
@@ -82,14 +83,14 @@ fun FindMatchScreen(
                 },
                 actions = {
                     // Badge che indica i filtri attivi
-                    if (state.selectedDate != null || state.selectedFieldId != null) {
+                    if (findState.selectedDate != null || findState.selectedFieldId != null) {
                         Badge(
                             containerColor = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(end = 8.dp)
                         ) {
                             val filterCount = listOfNotNull(
-                                state.selectedDate,
-                                state.selectedFieldId
+                                findState.selectedDate,
+                                findState.selectedFieldId
                             ).size
                             Text(filterCount.toString())
                         }
@@ -108,14 +109,14 @@ fun FindMatchScreen(
                 .padding(padding)
         ) {
             when {
-                state.isLoading -> {
+                findState.isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                state.events.isEmpty() -> {
+                findState.events.isEmpty() -> {
                     EmptyEventsView(
-                        hasFilters = state.selectedDate != null || state.selectedFieldId != null,
+                        hasFilters = findState.selectedDate != null || findState.selectedFieldId != null,
                         modifier = Modifier.align(Alignment.Center),
                         onClearFilters = { viewModel.clearFilters() }
                     )
@@ -148,7 +149,7 @@ fun FindMatchScreen(
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = "${state.events.size} events found",
+                                            text = "${findState.events.size} events found",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                                         )
@@ -164,7 +165,7 @@ fun FindMatchScreen(
                         }
 
                         // Lista eventi
-                        items(state.events) { eventInfo ->
+                        items(findState.events) { eventInfo ->
                             PublicEventCard(
                                 event = eventInfo.event,
                                 field = eventInfo.field,
@@ -355,10 +356,14 @@ fun PublicEventCard(
 fun EventDetailDialog(
     event: Event,
     field: Field,
+    currentUserId: String?,
     onDismiss: () -> Unit,
     onJoin: () -> Unit,
     isJoining: Boolean
 ) {
+    val isOrganizer = event.organizerId == currentUserId
+    val isAlreadyJoined = currentUserId?.let { event.currentPlayers.contains(it) } ?: false
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -488,7 +493,8 @@ fun EventDetailDialog(
                             .padding(20.dp)
                             .height(56.dp),
                         shape = RoundedCornerShape(12.dp),
-                        enabled = event.status == EventStatus.OPEN && !isJoining
+                        enabled = event.status == EventStatus.OPEN && !isJoining && !isOrganizer && !isAlreadyJoined
+
                     ) {
                         if (isJoining) {
                             CircularProgressIndicator(
@@ -504,7 +510,12 @@ fun EventDetailDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = if (event.status == EventStatus.FULL) "Event Full" else "Join Match",
+                                text = when {
+                                    isOrganizer -> "You are the Organizer"
+                                    isAlreadyJoined -> "Already Joined"
+                                    event.status == EventStatus.FULL -> "Event full"
+                                    else -> "Join Match"
+                                },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )

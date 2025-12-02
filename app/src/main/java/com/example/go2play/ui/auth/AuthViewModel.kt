@@ -43,7 +43,13 @@ class AuthViewModel(
 
             restoreResult.fold(
                 onSuccess = { hasSession ->
-                    val email = if (hasSession) authRepository.getCurrentUSerEmail() else null
+                    val email: String?
+                    if(hasSession) {
+                        authRepository.startAutoRefresh(viewModelScope)
+                        email = authRepository.getCurrentUSerEmail()
+                    } else {
+                        email = null
+                    }
                     _authState.value = _authState.value.copy(
                         isAuthenticated = hasSession,
                         userEmail = email,
@@ -106,6 +112,7 @@ class AuthViewModel(
 
             result.fold(
                 onSuccess = {
+                    authRepository.startAutoRefresh(viewModelScope)
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         isAuthenticated = true,
@@ -131,6 +138,7 @@ class AuthViewModel(
 
             result.fold(
                 onSuccess = {
+                    authRepository.startAutoRefresh(viewModelScope)
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         isAuthenticated = true,
@@ -155,10 +163,12 @@ class AuthViewModel(
             val result = authRepository.signOut()
             result.fold(
                 onSuccess = {
-                    _authState.value.copy(
+                    _authState.value = _authState.value.copy(
                         isLoading = false,
                         isAuthenticated = false,
-                        error = null
+                        userEmail = null,
+                        error = null,
+                        isCheckingSession = false
                     )
                 },
                 onFailure = { exception ->
