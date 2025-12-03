@@ -72,7 +72,7 @@ class FindMatchViewModel(
                 eventsResult.onSuccess { events ->
                     // Filtra solo eventi pubblici e non cancellati/completati
                     val publicEvents = events.filter { event ->
-                        event.is_public &&
+                        !event.isPrivate &&
                                 event.status != EventStatus.CANCELLED &&
                                 event.status != EventStatus.COMPLETED &&
                                 // Assicurati che la data sia futura o oggi
