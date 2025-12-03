@@ -421,13 +421,13 @@ fun EventDetailDialog(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            if (event.is_public) Icons.Default.Public else Icons.Default.Lock,
+                            if (event.isPrivate) Icons.Default.Lock else Icons.Default.Public,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = if (event.is_public) "Public Event" else "Private Event",
+                            text = if (event.isPrivate) "Private Event" else "Public Event",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

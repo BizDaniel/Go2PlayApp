@@ -19,10 +19,10 @@ data class Event(
     @SerialName("current_players")
     val currentPlayers: List<String> = emptyList(),
     val description: String? = null,
-    @SerialName("is_public")
-    val is_public: Boolean = true,
+    @SerialName("is_private")
+    val isPrivate: Boolean = false,
     @SerialName("group_id")
-    val group_id: String? = null,
+    val groupId: String? = null,
     @SerialName("created_at")
     val createdAt: String? = null
 )
