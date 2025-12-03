@@ -10,6 +10,20 @@ import com.example.go2play.data.model.EventStatus
 import com.example.go2play.data.remote.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+private data class UpdateEventPlayers(
+    @SerialName("current_players")
+    val currentPlayers: List<String>,
+    val status: String
+)
+
+@Serializable
+private data class UpdateNotificationStatus(
+    val status: String
+)
 
 class NotificationRepository {
     private val client = SupabaseClient.client
@@ -110,17 +124,7 @@ class NotificationRepository {
             val userId = client.auth.currentUserOrNull()?.id
                 ?: return Result.failure(Exception("User not authenticated"))
 
-            // Aggiorna lo stato della notifica
-            client.from("notifications")
-                .update(
-                    mapOf("status" to "accepted")
-                ) {
-                    filter {
-                        eq("id", notificationId)
-                    }
-                }
-
-            // Ottieni l'evento corrente
+            // 1. Ottieni l'evento corrente
             val event = client.from("events")
                 .select {
                     filter {
@@ -129,22 +133,36 @@ class NotificationRepository {
                 }
                 .decodeSingle<Event>()
 
-            // Aggiungi l'utente alla lista dei giocatori
-            val updatedPlayers = event.currentPlayers + userId
-
-            // Verifica se l'evento è pieno
-            val newStatus = if (updatedPlayers.size >= event.maxPlayers) {
-                EventStatus.FULL
-            } else {
-                event.status
+            // 2. Verifica se l'utente è già presente
+            if (event.currentPlayers.contains(userId)) {
+                // Aggiorna solo la notifica
+                client.from("notifications")
+                    .update(
+                        UpdateNotificationStatus(status = "accepted")
+                    ) {
+                        filter {
+                            eq("id", notificationId)
+                        }
+                    }
+                return Result.success(Unit)
             }
 
-            // Aggiorna l'evento
+            // 3. Aggiungi l'utente alla lista dei giocatori
+            val updatedPlayers = event.currentPlayers + userId
+
+            // 4. Determina il nuovo status dell'evento
+            val newStatus = if (updatedPlayers.size >= event.maxPlayers) {
+                "full"
+            } else {
+                event.status.name.lowercase()
+            }
+
+            // 5. Aggiorna l'evento con la nuova lista giocatori e status
             client.from("events")
                 .update(
-                    mapOf(
-                        "current_players" to updatedPlayers,
-                        "status" to newStatus.name.lowercase()
+                    UpdateEventPlayers(
+                        currentPlayers = updatedPlayers,
+                        status = newStatus
                     )
                 ) {
                     filter {
@@ -152,17 +170,17 @@ class NotificationRepository {
                     }
                 }
 
-
-            // Aggiorna lo stato della notifica
+            // 6. Aggiorna lo stato della notifica
             client.from("notifications")
                 .update(
-                    mapOf("status" to NotificationStatus.ACCEPTED.name.lowercase())
+                    UpdateNotificationStatus(status = "accepted")
                 ) {
                     filter {
                         eq("id", notificationId)
                     }
                 }
 
+            Log.d("NotificationRepository", "User $userId successfully added to event $eventId")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e("NotificationRepository", "Error accepting invite", e)
@@ -175,7 +193,7 @@ class NotificationRepository {
         return try {
             client.from("notifications")
                 .update(
-                    mapOf("status" to "declined")
+                    UpdateNotificationStatus(status = "declined")
                 ) {
                     filter {
                         eq("id", notificationId)
@@ -194,7 +212,7 @@ class NotificationRepository {
         return try {
             client.from("notifications")
                 .update(
-                    mapOf("status" to "read")
+                    UpdateNotificationStatus(status = "read")
                 ) {
                     filter {
                         eq("id", notificationId)

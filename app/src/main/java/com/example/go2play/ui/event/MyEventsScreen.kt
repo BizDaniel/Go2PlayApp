@@ -1,23 +1,32 @@
 package com.example.go2play.ui.events
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.go2play.data.model.Event
 import com.example.go2play.data.model.EventStatus
 import com.example.go2play.data.model.Field
+import com.example.go2play.data.model.UserProfile
 import org.threeten.bp.LocalDate
 import org.threeten.bp.format.DateTimeFormatter
 import java.util.Locale
@@ -45,7 +54,10 @@ fun MyEventsScreen(
         EventDetailDialog(
             event = eventWithField.event,
             field = eventWithField.field,
-            onDismiss = { selectedEvent = null }
+            players = eventWithField.players,
+            isLoadingPlayers = state.isLoadingPlayers,
+            onDismiss = { selectedEvent = null },
+            onLoadPlayers = { viewModel.loadEventPlayers(eventWithField.event.id) }
         )
     }
 
@@ -206,7 +218,7 @@ fun EventCard(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2
+                    maxLines = 1
                 )
             }
         }
@@ -240,8 +252,19 @@ fun StatusBadge(status: EventStatus) {
 fun EventDetailDialog(
     event: Event,
     field: Field,
-    onDismiss: () -> Unit
+    players: List<UserProfile>,
+    isLoadingPlayers: Boolean,
+    onDismiss: () -> Unit,
+    onLoadPlayers: () -> Unit
 ) {
+
+    // Carica i giocatori quando il dialog si apre
+    LaunchedEffect(Unit) {
+        if (players.isEmpty() && event.currentPlayers.isNotEmpty()) {
+            onLoadPlayers()
+        }
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -252,11 +275,10 @@ fun EventDetailDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
             ) {
                 // Header
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -271,108 +293,195 @@ fun EventDetailDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp)
+                ) {
+                    // Status
+                    StatusBadge(status = event.status)
 
-                // Status
-                StatusBadge(status = event.status)
-
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Info campo
-                DetailRow(
-                    icon = Icons.Default.SportsSoccer,
-                    label = "Field",
-                    value = field.name
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                DetailRow(
-                    icon = Icons.Default.LocationOn,
-                    label = "Address",
-                    value = field.address
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Data e ora
-                DetailRow(
-                    icon = Icons.Default.CalendarMonth,
-                    label = "Date",
-                    value = formatDate(event.date)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                DetailRow(
-                    icon = Icons.Default.Schedule,
-                    label = "Time",
-                    value = event.timeSlot
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Giocatori
-                DetailRow(
-                    icon = Icons.Default.People,
-                    label = "Players",
-                    value = "${event.currentPlayers.size}/${event.maxPlayers}"
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                DetailRow(
-                    icon = Icons.Default.Group,
-                    label = "Format",
-                    value = "${field.playerCapacity}v${field.playerCapacity}"
-                )
-
-                // Descrizione
-                event.description?.let { description ->
                     Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider()
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "Description",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
+                    // Info campo
+                    DetailRow(
+                        icon = Icons.Default.SportsSoccer,
+                        label = "Field",
+                        value = field.name
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
 
-                // Tipo evento
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        if (event.is_public) Icons.Default.Public else Icons.Default.Lock,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    DetailRow(
+                        icon = Icons.Default.LocationOn,
+                        label = "Address",
+                        value = field.address
                     )
-                    Text(
-                        text = if (event.is_public) "Public Event" else "Private Event",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Data e ora
+                    DetailRow(
+                        icon = Icons.Default.CalendarMonth,
+                        label = "Date",
+                        value = formatDate(event.date)
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    DetailRow(
+                        icon = Icons.Default.Schedule,
+                        label = "Time",
+                        value = event.timeSlot
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Giocatori
+                    DetailRow(
+                        icon = Icons.Default.People,
+                        label = "Players",
+                        value = "${event.currentPlayers.size}/${event.maxPlayers}"
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    DetailRow(
+                        icon = Icons.Default.Group,
+                        label = "Format",
+                        value = "${field.playerCapacity}v${field.playerCapacity}"
+                    )
+
+                    // Sezione giocatori con foto
+                    if (event.currentPlayers.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Players (${event.currentPlayers.size})",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        if (isLoadingPlayers) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            }
+                        } else if (players.isNotEmpty()) {
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(players) { player ->
+                                    PlayerItem(player = player)
+                                }
+                            }
+                        }
+                    }
+
+                    // Descrizione
+                    event.description?.let { description ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Description",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Tipo evento
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            if (event.is_public) Icons.Default.Public else Icons.Default.Lock,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = if (event.is_public) "Public Event" else "Private Event",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PlayerItem(player: UserProfile) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(60.dp)
+    ) {
+        // Avatar
+        if (player.avatarUrl != null) {
+            AsyncImage(
+                model = player.avatarUrl,
+                contentDescription = "Player avatar",
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = "Default avatar",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Username
+        Text(
+            text = player.username,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
     }
 }
 
