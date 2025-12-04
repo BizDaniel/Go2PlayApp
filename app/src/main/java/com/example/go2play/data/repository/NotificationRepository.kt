@@ -183,7 +183,7 @@ class NotificationRepository {
             Log.d("NotificationRepository", "User $userId successfully added to event $eventId")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("NotificationRepository", "Error accepting invite", e)
+            Log.e("NotificationRepository", "Error accepting invite!", e)
             Result.failure(e)
         }
     }
