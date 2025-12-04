@@ -107,3 +107,10 @@ object TimeSlots {
     }
 }
 
+@Serializable
+data class UpdateEventPlayers(
+    @SerialName("current_players")
+    val currentPlayers: List<String>,
+    val status: String
+)
+

@@ -94,17 +94,27 @@ class EventRepository {
                     }
                 }
                 .decodeSingle<Event>()
+
             if (event.currentPlayers.contains(userId)) {
+                Log.d("EventRepository", "Player $userId already in event $eventId")
                 return Result.success(Unit) // Giocatore già presente, non fare nulla
             }
 
             // 3. Aggiungi il giocatore alla lista
             val updatedPlayers = event.currentPlayers + userId
 
+            val newStatus = if (updatedPlayers.size >= event.maxPlayers) {
+                "full"
+            } else {
+                event.status.name.lowercase()
+            }
+
             // 4. Aggiorna l'evento nel database
             client.from("events")
                 .update(
-                    mapOf("current_players" to updatedPlayers)
+                    mapOf("current_players" to updatedPlayers,
+                        "status" to newStatus
+                        )
                 ) {
                     filter {
                         eq("id", eventId)

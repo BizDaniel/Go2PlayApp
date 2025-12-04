@@ -7,18 +7,12 @@ import com.example.go2play.data.model.NotificationStatus
 import com.example.go2play.data.model.NotificationType
 import com.example.go2play.data.model.Event
 import com.example.go2play.data.model.EventStatus
+import com.example.go2play.data.model.UpdateEventPlayers
 import com.example.go2play.data.remote.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
-@Serializable
-private data class UpdateEventPlayers(
-    @SerialName("current_players")
-    val currentPlayers: List<String>,
-    val status: String
-)
 
 @Serializable
 private data class UpdateNotificationStatus(
@@ -138,7 +132,7 @@ class NotificationRepository {
                 // Aggiorna solo la notifica
                 client.from("notifications")
                     .update(
-                        UpdateNotificationStatus(status = "accepted")
+                        mapOf("status" to "accepted")
                     ) {
                         filter {
                             eq("id", notificationId)
@@ -154,15 +148,15 @@ class NotificationRepository {
             val newStatus = if (updatedPlayers.size >= event.maxPlayers) {
                 "full"
             } else {
-                event.status.name.lowercase()
+                "open"
             }
 
             // 5. Aggiorna l'evento con la nuova lista giocatori e status
             client.from("events")
                 .update(
-                    UpdateEventPlayers(
-                        currentPlayers = updatedPlayers,
-                        status = newStatus
+                    mapOf(
+                        "current_players" to updatedPlayers,
+                        "status" to newStatus
                     )
                 ) {
                     filter {
@@ -173,7 +167,7 @@ class NotificationRepository {
             // 6. Aggiorna lo stato della notifica
             client.from("notifications")
                 .update(
-                    UpdateNotificationStatus(status = "accepted")
+                    mapOf("status" to "accepted")
                 ) {
                     filter {
                         eq("id", notificationId)
