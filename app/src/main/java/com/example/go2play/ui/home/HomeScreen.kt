@@ -34,7 +34,8 @@ fun HomeScreen(
     onNavigateToMyGroups: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToMyEvents: () -> Unit = {},
-    onNavigateToFindMatch: () -> Unit = {}
+    onNavigateToFindMatch: () -> Unit = {},
+    onNavigateToFindUsers: () -> Unit = {}
 ) {
     val profileState by profileViewModel.profileState.collectAsStateWithLifecycle()
     val notificationState by notificationViewModel.notificationState.collectAsStateWithLifecycle()
@@ -178,6 +179,21 @@ fun HomeScreen(
                     color = Color(0xFF4CAF50),
                     modifier = Modifier.weight(1f),
                     onClick = onNavigateToCreateGroup
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                EnhancedActionButton(
+                    icon = Icons.Default.People,
+                    label = "Find Users",
+                    color = Color(0xFF9C27B0),
+                    modifier = Modifier.weight(1f),
+                    onClick = onNavigateToFindUsers
                 )
             }
 

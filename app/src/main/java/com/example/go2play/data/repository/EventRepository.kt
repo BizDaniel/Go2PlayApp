@@ -4,8 +4,32 @@ import android.util.Log
 import com.example.go2play.data.model.Event
 import com.example.go2play.data.model.EventCreate
 import com.example.go2play.data.remote.SupabaseClient
+import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+private data class EventInsertPayload(
+    @SerialName("field_id")
+    val fieldId: String,
+    @SerialName("organizer_id")
+    val organizerId: String,
+    val date: String,
+    @SerialName("time_slot")
+    val timeSlot: String,
+    @SerialName("max_players")
+    val maxPlayers: Int,
+    val description: String? = null,
+    @SerialName("is_private")
+    val isPrivate: Boolean = false,
+    @SerialName("group_id")
+    val groupId: String? = null,
+    @SerialName("current_players")
+    val currentPlayers: List<String>
+)
 
 class EventRepository {
     private val client = SupabaseClient.client
@@ -55,12 +79,25 @@ class EventRepository {
     // Crea un nuovo evento
     suspend fun createEvent(eventCreate: EventCreate): Result<Event> {
         return try {
+            val insertPayload = EventInsertPayload(
+                fieldId = eventCreate.fieldId,
+                organizerId = eventCreate.organizerId,
+                date = eventCreate.date,
+                timeSlot = eventCreate.timeSlot,
+                maxPlayers = eventCreate.maxPlayers,
+                description = eventCreate.description,
+                isPrivate = eventCreate.isPrivate,
+                groupId = eventCreate.groupId,
+                currentPlayers = listOf(eventCreate.organizerId)
+            )
+
             val createdEvent = client.from("events")
-                .insert(eventCreate) {
+                .insert(insertPayload) {
                     select()
                 }
                 .decodeSingle<Event>()
 
+            Log.d("EventRepository", "Event created successfully. Organizer ${eventCreate.organizerId} included in players.")
             Result.success(createdEvent)
         } catch (e: Exception) {
             Log.e("EventRepository", "Error creating event", e)
@@ -87,44 +124,22 @@ class EventRepository {
 
     suspend fun addPlayerToEvent(eventId: String, userId: String): Result<Unit> {
         return try {
-            val event = client.from("events")
-                .select {
-                    filter {
-                        eq("id", eventId)
-                    }
-                }
-                .decodeSingle<Event>()
+            Log.d("EventRepository", "Calling RPC join_event for user $userId on event $eventId")
 
-            if (event.currentPlayers.contains(userId)) {
-                Log.d("EventRepository", "Player $userId already in event $eventId")
-                return Result.success(Unit) // Giocatore già presente, non fare nulla
-            }
+            // Chiama la funzione SQL creata sopra
+            client.postgrest.rpc(
+                "join_event",
+                parameters = mapOf(
+                    "p_event_id" to eventId,
+                    "p_user_id" to userId
+                )
+            )
 
-            // 3. Aggiungi il giocatore alla lista
-            val updatedPlayers = event.currentPlayers + userId
-
-            val newStatus = if (updatedPlayers.size >= event.maxPlayers) {
-                "full"
-            } else {
-                event.status.name.lowercase()
-            }
-
-            // 4. Aggiorna l'evento nel database
-            client.from("events")
-                .update(
-                    mapOf("current_players" to updatedPlayers,
-                        "status" to newStatus
-                        )
-                ) {
-                    filter {
-                        eq("id", eventId)
-                    }
-                }
-
-            Log.d("EventRepository", "Player $userId added to event $eventId")
+            Log.d("EventRepository", "Successfully joined event via RPC")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("EventRepository", "Error adding player to event", e)
+            // Supabase lancia un'eccezione se la funzione SQL fa "raise exception"
+            Log.e("EventRepository", "Error joining event: ${e.message}", e)
             Result.failure(e)
         }
     }

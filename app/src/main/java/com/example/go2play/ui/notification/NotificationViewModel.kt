@@ -69,21 +69,30 @@ class NotificationViewModel(
         }
     }
 
-    fun acceptInvite(notificationId: String, eventId: String) {
+    fun acceptInvite(notification: Notification) {
         viewModelScope.launch {
-            _notificationState.value = _notificationState.value.copy(
-                isAccepting = true,
-                error = null
-            )
+            _notificationState.value = _notificationState.value.copy(isAccepting = true, error = null)
 
-            val result = repository.acceptInvite(notificationId, eventId)
+            val userId = repository.getCurrentUserId()
+            if (userId == null) {
+                _notificationState.value = _notificationState.value.copy(
+                    isAccepting = false,
+                    error = "User not authenticated"
+                )
+                return@launch
+            }
+
+            val result = repository.acceptEventInvite(
+                eventId = notification.eventId,
+                userId = userId,
+                notificationId = notification.id
+            )
 
             result.fold(
                 onSuccess = {
                     _notificationState.value = _notificationState.value.copy(
                         isAccepting = false
                     )
-                    // Ricarica le notifiche
                     loadNotifications()
                 },
                 onFailure = { exception ->

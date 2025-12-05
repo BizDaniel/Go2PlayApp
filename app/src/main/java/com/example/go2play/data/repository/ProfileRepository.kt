@@ -30,6 +30,23 @@ class ProfileRepository {
         }
     }
 
+    // Funzione per ottenere tutti gli utenti tranne quello corrente
+    suspend fun getAllUsers(currentUserId: String): Result<List<UserProfile>> {
+        return try {
+            val users = client.from("profiles")
+                .select {
+                    filter {
+                        neq("id", currentUserId)
+                    }
+                }
+                .decodeList<UserProfile>()
+            Result.success(users)
+        } catch (e: Exception) {
+            Log.e("ProfileRepository", "Error getting all users", e)
+            Result.failure(e)
+        }
+    }
+
     // Crea un profilo
     suspend fun createProfile(userId: String, email: String, username: String): Result<Unit> {
         return try {
