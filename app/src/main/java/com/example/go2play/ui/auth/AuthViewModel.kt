@@ -17,7 +17,8 @@ data class AuthState(
     val error: String? = null,
     val userEmail: String? = null,
     val isUsernameAvailable: Boolean? = null,
-    val isCheckingUsername: Boolean = false
+    val isCheckingUsername: Boolean = false,
+    val isCheckingSession: Boolean = true
 )
 
 class AuthViewModel(
@@ -35,12 +36,34 @@ class AuthViewModel(
     }
 
     private fun checkAuthStatus() {
-        val isLoggedIn = authRepository.isUserLoggedIn()
-        val email = authRepository.getCurrentUSerEmail()
-        _authState.value = _authState.value.copy(
-            isAuthenticated = isLoggedIn,
-            userEmail = email
-        )
+        viewModelScope.launch {
+            _authState.value = _authState.value.copy(isCheckingSession = true)
+
+            val restoreResult = authRepository.restoreSession()
+
+            restoreResult.fold(
+                onSuccess = { hasSession ->
+                    val email: String?
+                    if(hasSession) {
+                        authRepository.startAutoRefresh(viewModelScope)
+                        email = authRepository.getCurrentUSerEmail()
+                    } else {
+                        email = null
+                    }
+                    _authState.value = _authState.value.copy(
+                        isAuthenticated = hasSession,
+                        userEmail = email,
+                        isCheckingSession = false
+                    )
+                },
+                onFailure = {
+                    _authState.value = _authState.value.copy(
+                        isAuthenticated = false,
+                        isCheckingSession = false
+                    )
+                }
+            )
+        }
     }
 
     fun checkUsernameAvailability(username: String) {
@@ -89,6 +112,7 @@ class AuthViewModel(
 
             result.fold(
                 onSuccess = {
+                    authRepository.startAutoRefresh(viewModelScope)
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         isAuthenticated = true,
@@ -114,6 +138,7 @@ class AuthViewModel(
 
             result.fold(
                 onSuccess = {
+                    authRepository.startAutoRefresh(viewModelScope)
                     _authState.value = _authState.value.copy(
                         isLoading = false,
                         isAuthenticated = true,
@@ -124,7 +149,7 @@ class AuthViewModel(
                 onFailure = { exception ->
                     _authState.value = _authState.value.copy(
                         isLoading = false,
-                        error = exception.message ?: "Errore during the login"
+                        error = exception.message ?: "Error during the log in"
                     )
                 }
             )
@@ -133,9 +158,28 @@ class AuthViewModel(
 
     fun signOut() {
         viewModelScope.launch {
-            authRepository.signOut()
-            _authState.value = AuthState(isAuthenticated = false)
+            _authState.value = _authState.value.copy(isLoading = true, error = null)
+
+            val result = authRepository.signOut()
+            result.fold(
+                onSuccess = {
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        isAuthenticated = false,
+                        userEmail = null,
+                        error = null,
+                        isCheckingSession = false
+                    )
+                },
+                onFailure = { exception ->
+                    _authState.value = _authState.value.copy(
+                        isLoading = false,
+                        error = exception.message ?: "Sign out error"
+                    )
+                }
+            )
         }
+        _authState.value = AuthState(isAuthenticated = false)
     }
 
     fun clearError() {

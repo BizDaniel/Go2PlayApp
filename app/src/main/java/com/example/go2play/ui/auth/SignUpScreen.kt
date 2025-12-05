@@ -14,7 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun SignUpScreen(
-    viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    viewModel: AuthViewModel,
     onNavigateToLogin: () -> Unit,
     onSignUpSuccess: () -> Unit
 ) {
@@ -101,13 +101,13 @@ fun SignUpScreen(
                         }
                         authState.isUsernameAvailable == false -> {
                             Text(
-                                "Username available",
+                                "Username not available",
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
                         authState.isUsernameAvailable == true -> {
                             Text(
-                                "Username not available",
+                                "Username available",
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }

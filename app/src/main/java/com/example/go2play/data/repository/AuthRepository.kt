@@ -3,12 +3,19 @@ package com.example.go2play.data.repository
 import com.example.go2play.data.remote.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 
 class AuthRepository {
 
     private val client = SupabaseClient.client
     private val profileRepository = ProfileRepository()
+    private var refreshJob: Job? = null
 
     // Registrazione con email, password e username
     suspend fun signUp(email: String, password: String, username: String): Result<Unit> {
@@ -37,6 +44,7 @@ class AuthRepository {
                 this.email = email
                 this.password = password
             }
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -46,6 +54,9 @@ class AuthRepository {
     // Logout
     suspend fun signOut(): Result<Unit> {
         return try {
+
+            stopAutoRefresh()
+
             client.auth.signOut()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -61,6 +72,53 @@ class AuthRepository {
     // Ottieni l'email dell'utente corrente
     fun getCurrentUSerEmail(): String? {
         return client.auth.currentUserOrNull()?.email
+    }
+
+    // Verifica e ripristina la sessione
+    suspend fun restoreSession(): Result<Boolean> {
+        return try {
+            // Supabase Kotlin gestisce automaticamente il refresh del token
+            // Basta verificare se esiste una sessione valida
+            val session = client.auth.currentSessionOrNull()
+
+            Result.success(session != null)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun refreshSession(): Result<Unit> {
+        return try {
+            client.auth.refreshCurrentSession()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    internal fun startAutoRefresh(scope: CoroutineScope) {
+        stopAutoRefresh()
+
+        refreshJob = scope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(50 * 60 * 1000L)
+
+                try {
+                    if (isUserLoggedIn()) {
+                        client.auth.refreshCurrentSession()
+                    } else {
+                        break
+                    }
+                } catch (e: Exception) {
+                    break
+                }
+            }
+        }
+    }
+
+    private fun stopAutoRefresh() {
+        refreshJob?.cancel()
+        refreshJob = null
     }
 }
 
