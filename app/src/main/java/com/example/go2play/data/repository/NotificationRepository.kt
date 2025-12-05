@@ -11,6 +11,8 @@ import com.example.go2play.data.model.UpdateEventPlayers
 import com.example.go2play.data.remote.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -113,71 +115,23 @@ class NotificationRepository {
     }
 
     // Accetta invito (aggiorna notifica e aggiunge utente all'evento)
-    suspend fun acceptInvite(notificationId: String, eventId: String): Result<Unit> {
+    suspend fun acceptEventInvite(notificationId: String, eventId: String, userId: String): Result<Unit> {
         return try {
-            val userId = client.auth.currentUserOrNull()?.id
-                ?: return Result.failure(Exception("User not authenticated"))
+            Log.d("NotificationRepository", "Calling RPC accept_event_invite for user $userId on event $eventId (Notification: $notificationId)")
 
-            // 1. Ottieni l'evento corrente
-            val event = client.from("events")
-                .select {
-                    filter {
-                        eq("id", eventId)
-                    }
-                }
-                .decodeSingle<Event>()
+            client.postgrest.rpc(
+                "accept_event_invite",
+                parameters = mapOf(
+                    "p_event_id" to eventId,
+                    "p_user_id" to userId,
+                    "p_notification_id" to notificationId
+                )
+            )
 
-            // 2. Verifica se l'utente è già presente
-            if (event.currentPlayers.contains(userId)) {
-                // Aggiorna solo la notifica
-                client.from("notifications")
-                    .update(
-                        mapOf("status" to "accepted")
-                    ) {
-                        filter {
-                            eq("id", notificationId)
-                        }
-                    }
-                return Result.success(Unit)
-            }
-
-            // 3. Aggiungi l'utente alla lista dei giocatori
-            val updatedPlayers = event.currentPlayers + userId
-
-            // 4. Determina il nuovo status dell'evento
-            val newStatus = if (updatedPlayers.size >= event.maxPlayers) {
-                "full"
-            } else {
-                "open"
-            }
-
-            // 5. Aggiorna l'evento con la nuova lista giocatori e status
-            client.from("events")
-                .update(
-                    mapOf(
-                        "current_players" to updatedPlayers,
-                        "status" to newStatus
-                    )
-                ) {
-                    filter {
-                        eq("id", eventId)
-                    }
-                }
-
-            // 6. Aggiorna lo stato della notifica
-            client.from("notifications")
-                .update(
-                    mapOf("status" to "accepted")
-                ) {
-                    filter {
-                        eq("id", notificationId)
-                    }
-                }
-
-            Log.d("NotificationRepository", "User $userId successfully added to event $eventId")
+            Log.d("NotificationRepository", "Invite accepted successfully via RPC")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("NotificationRepository", "Error accepting invite!", e)
+            Log.e("NotificationRepository", "Error accepting invite: ${e.message}", e)
             Result.failure(e)
         }
     }

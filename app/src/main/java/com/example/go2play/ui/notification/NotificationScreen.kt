@@ -109,7 +109,7 @@ fun NotificationScreen(
                                 NotificationCard(
                                     notification = notification,
                                     onAccept = {
-                                        viewModel.acceptInvite(notification.id, notification.eventId)
+                                        viewModel.acceptInvite(notification)
                                     },
                                     onDecline = {
                                         viewModel.declineInvite(notification.id)
