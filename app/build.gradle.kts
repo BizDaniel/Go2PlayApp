@@ -91,4 +91,6 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
 
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    implementation("androidx.compose.foundation:foundation-layout-android:1.6.0")
 }

@@ -5,8 +5,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -20,12 +22,23 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.go2play.ui.notifications.NotificationViewModel
 import com.example.go2play.ui.profile.ProfileViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.URL
 
+data class WeatherData(
+    val temperature: Double,
+    val weatherCode: Int
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     profileViewModel: ProfileViewModel = viewModel(),
@@ -41,29 +54,91 @@ fun HomeScreen(
     val notificationState by notificationViewModel.notificationState.collectAsStateWithLifecycle()
     val profile = profileState.profile
 
+    var weatherData by remember { mutableStateOf<WeatherData?>(null) }
+
     // Ricarica le notifiche quando la schermata diventa visibile
     LaunchedEffect(Unit) {
         notificationViewModel.loadNotifications()
+        try {
+            weatherData = fetchWeather()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Header con gradiente
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.primaryContainer,
-            shadowElevation = 4.dp
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Trento a sinistra
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Location",
+                                modifier = Modifier.size(12.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = "Trento",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
+
+                        weatherData?.let { weather ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = getWeatherEmoji(weather.weatherCode),
+                                    fontSize = 18.sp
+                                )
+                                Text(
+                                    text = "${weather.temperature.toInt()}Â°C",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
         ) {
-            Column(
+            // Card/Header con Avatar e Nome utente
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 4.dp
+                )
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -120,109 +195,141 @@ fun HomeScreen(
                     }
                 }
             }
-        }
-        // Contenuto principale
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp)
-        ) {
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Sezione Quick Actions
-            Text(
-                text = "Quick Actions",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Griglia 2x2 dei pulsanti principali
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
             ) {
-                EnhancedActionButton(
-                    icon = Icons.Default.Search,
-                    label = "Find Match",
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToFindMatch
-                )
-                EnhancedActionButton(
-                    icon = Icons.Default.Event,
-                    label = "My Events",
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToMyEvents
-                )
-            }
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                EnhancedActionButton(
-                    icon = Icons.Default.Groups,
-                    label = "My Groups",
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToMyGroups
+                // Sezione Quick Actions
+                Text(
+                    text = "Quick Actions",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
-                EnhancedActionButton(
-                    icon = Icons.Default.GroupAdd,
-                    label = "Create Group",
-                    color = Color(0xFF4CAF50),
-                    modifier = Modifier.weight(1f),
-                    onClick = onNavigateToCreateGroup
-                )
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                EnhancedActionButton(
+                // Griglia 2x2 dei pulsanti principali
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    EnhancedActionButton(
+                        icon = Icons.Default.Search,
+                        label = "Find Match",
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToFindMatch
+                    )
+                    EnhancedActionButton(
+                        icon = Icons.Default.Event,
+                        label = "My Events",
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToMyEvents
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    EnhancedActionButton(
+                        icon = Icons.Default.Groups,
+                        label = "My Groups",
+                        color = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToMyGroups
+                    )
+                    EnhancedActionButton(
+                        icon = Icons.Default.GroupAdd,
+                        label = "Create Group",
+                        color = Color(0xFF4CAF50),
+                        modifier = Modifier.weight(1f),
+                        onClick = onNavigateToCreateGroup
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                ModernCard(
                     icon = Icons.Default.People,
-                    label = "Find Users",
-                    color = Color(0xFF9C27B0),
-                    modifier = Modifier.weight(1f),
+                    title = "Find Users",
+                    subtitle = "Check the profile of the other users!",
+                    iconColor = Color(0xFFFF9800),
                     onClick = onNavigateToFindUsers
                 )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Sezione Updates
+                Text(
+                    text = "Updates",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Card Notifiche
+                ModernCard(
+                    icon = Icons.Default.Notifications,
+                    title = "Notifications",
+                    subtitle = if (notificationState.pendingCount > 0) {
+                        "${notificationState.pendingCount} pending invitation${if (notificationState.pendingCount > 1) "s" else ""}"
+                    } else {
+                        "Check your latest updates"
+                    },
+                    iconColor = Color(0xFFFF9800),
+                    badge = if (notificationState.pendingCount > 0) notificationState.pendingCount.toString() else null,
+                    onClick = onNavigateToNotifications
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Sezione Updates
-            Text(
-                text = "Updates",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Card Notifiche
-            ModernCard(
-                icon = Icons.Default.Notifications,
-                title = "Notifications",
-                subtitle = if (notificationState.pendingCount > 0) {
-                    "${notificationState.pendingCount} pending invitation${if (notificationState.pendingCount > 1) "s" else ""}"
-                } else {
-                    "Check your latest updates"
-                },
-                iconColor = Color(0xFFFF9800),
-                badge = if (notificationState.pendingCount > 0) notificationState.pendingCount.toString() else null,
-                onClick = onNavigateToNotifications
-            )
         }
+    }
+}
+
+suspend fun fetchWeather(): WeatherData = withContext(Dispatchers.IO) {
+    // Coordinate città di Trento
+    val lat = 46.0664
+    val lon = 11.1257
+
+    // Uso l'API Open-Meteo per ricavare info sul meteo
+    val url = "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true"
+
+    val response = URL(url).readText()
+    val json = JSONObject(response)
+    val currentWeather = json.getJSONObject("current_weather")
+
+    WeatherData(
+        temperature = currentWeather.getDouble("temperature"),
+        weatherCode = currentWeather.getInt("weathercode")
+    )
+}
+
+fun getWeatherEmoji(weatherCode: Int): String {
+    return when(weatherCode) {
+        0 -> "☀️"
+        1, 2, 3 -> "⛅"
+        45, 48 -> "🌫️"
+        51, 53, 55 -> "🌦️"
+        61, 63, 65 -> "🌧️"
+        66, 67 -> "🌨️"
+        71, 73, 75 -> "❄️"
+        77 -> "🌨️"
+        80, 81, 82 -> "🌧️"
+        85, 86 -> "❄️"
+        95 -> "⛈️"
+        96, 99 -> "⛈️"
+        else -> "🌤️"
     }
 }
 
