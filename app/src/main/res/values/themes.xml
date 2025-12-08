@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.Go2Play" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Status bar trasparente -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
 
-    <style name="Theme.Go2Play" parent="android:Theme.Material.Light.NoActionBar" />
+        <!-- Navigation bar trasparente (opzionale) -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+
+        <!-- Abilita il drawing dietro la system bar -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
+        <!-- Icone della status bar scure per light mode -->
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>

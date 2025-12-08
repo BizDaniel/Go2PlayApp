@@ -26,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.go2play.data.model.Field
 import com.example.go2play.data.model.SurfaceType
+import androidx.compose.foundation.layout.WindowInsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +64,7 @@ fun ExploreScreen(
                 title = { Text("Explore Fields") }
             )
         },
+        contentWindowInsets = WindowInsets(0.dp),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
