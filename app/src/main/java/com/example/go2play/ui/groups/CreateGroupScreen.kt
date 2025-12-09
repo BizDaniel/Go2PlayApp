@@ -73,6 +73,7 @@ fun CreateGroupScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Create a Group") },
+                windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -80,6 +81,7 @@ fun CreateGroupScreen(
                 }
             )
         },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(

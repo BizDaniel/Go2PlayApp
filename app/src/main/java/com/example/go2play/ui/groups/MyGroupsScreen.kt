@@ -43,6 +43,7 @@ fun MyGroupsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("My Groups") },
+                windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -50,6 +51,7 @@ fun MyGroupsScreen(
                 }
             )
         },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(

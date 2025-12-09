@@ -95,6 +95,7 @@ fun EditProfileScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Modifica Profilo") },
+                windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
@@ -102,6 +103,7 @@ fun EditProfileScreen(
                 }
             )
         },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         if (profileState.isLoading) {

@@ -162,6 +162,7 @@ fun GroupDetailScreen(
         topBar = {
             TopAppBar(
                 title = { Text(state.group?.name ?: "Group Details") },
+                windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -184,6 +185,7 @@ fun GroupDetailScreen(
                 }
             )
         },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             // FAB per aggiungere membri (solo per creatore)
             if (state.isCreator) {

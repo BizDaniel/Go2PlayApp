@@ -76,6 +76,7 @@ fun FindMatchScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Find a Match") },
+                windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -101,6 +102,7 @@ fun FindMatchScreen(
                 }
             )
         },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(
