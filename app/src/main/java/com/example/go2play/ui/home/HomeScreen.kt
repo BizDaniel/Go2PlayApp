@@ -26,12 +26,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.go2play.ui.finduser.UserDetailsDialog
 import com.example.go2play.ui.notifications.NotificationViewModel
 import com.example.go2play.ui.profile.ProfileViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class WeatherData(
     val temperature: Double,
@@ -55,6 +59,8 @@ fun HomeScreen(
     val profile = profileState.profile
 
     var weatherData by remember { mutableStateOf<WeatherData?>(null) }
+    var showProfileDialog by remember { mutableStateOf(false) }
+    var currentTime by remember { mutableStateOf(getCurrentDateTime()) }
 
     // Ricarica le notifiche quando la schermata diventa visibile
     LaunchedEffect(Unit) {
@@ -66,55 +72,74 @@ fun HomeScreen(
         }
     }
 
+    // Per aggiornare l'ora
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentTime = getCurrentDateTime()
+            kotlinx.coroutines.delay(60000) // 60 secondi
+        }
+    }
+
+    if (showProfileDialog && profile != null) {
+        UserDetailsDialog(
+            user = profile,
+            onDismiss = { showProfileDialog = false }
+        )
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
+                windowInsets = WindowInsets(0),
                 title = {
+                    Text(
+                        text = "${currentTime.dayOfWeek}, ${currentTime.time}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                navigationIcon = {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 8.dp)
                     ) {
-                        // Trento a sinistra
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Location",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Trento",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                actions = {
+                    weatherData?.let { weather ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            modifier = Modifier.padding(end = 8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = "Location",
-                                modifier = Modifier.size(12.dp),
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
                             Text(
-                                text = "Trento",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                                text = getWeatherEmoji(weather.weatherCode),
+                                fontSize = 18.sp
                             )
-                        }
-
-                        weatherData?.let { weather ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = getWeatherEmoji(weather.weatherCode),
-                                    fontSize = 18.sp
-                                )
-                                Text(
-                                    text = "${weather.temperature.toInt()}Â°C",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                )
-                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${weather.temperature.toInt()}°C",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
                         }
                     }
                 }
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         Column(
             modifier = Modifier
@@ -133,7 +158,8 @@ fun HomeScreen(
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 4.dp
-                )
+                ),
+                onClick = { showProfileDialog = true }
             ) {
                 Row(
                     modifier = Modifier
@@ -347,7 +373,6 @@ fun EnhancedActionButton(
         animationSpec = tween(100),
         label = "scale"
     )
-
     Card(
         modifier = modifier
             .aspectRatio(1f)
@@ -524,4 +549,20 @@ fun ModernCard(
             isPressed = false
         }
     }
+}
+
+data class DateTimeInfo(
+    val dayOfWeek: String,
+    val time: String
+)
+
+fun getCurrentDateTime(): DateTimeInfo {
+    val dateFormat = SimpleDateFormat("EEEE", Locale.ENGLISH)
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.ENGLISH)
+    val now = Date()
+
+    return DateTimeInfo(
+        dayOfWeek = dateFormat.format(now),
+        time = timeFormat.format(now)
+    )
 }

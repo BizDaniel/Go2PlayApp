@@ -65,6 +65,7 @@ fun MyEventsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("My Events") },
+                windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -72,6 +73,7 @@ fun MyEventsScreen(
                 }
             )
         },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(
