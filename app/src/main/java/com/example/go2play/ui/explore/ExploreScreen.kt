@@ -27,6 +27,7 @@ import coil.compose.AsyncImage
 import com.example.go2play.data.model.Field
 import com.example.go2play.data.model.SurfaceType
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +63,14 @@ fun ExploreScreen(
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(0),
-                title = { Text("Explore Fields") }
+                title = {
+                    Text(
+                        text = "Explore Fields",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp
+                    )
+                }
             )
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -82,6 +90,7 @@ fun ExploreScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 singleLine = true,
+                shape = RoundedCornerShape(30.dp),
                 leadingIcon = {
                     Icon(Icons.Default.Search, contentDescription = "Search")
                 },
@@ -502,7 +511,11 @@ fun FieldCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(18.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -526,8 +539,8 @@ fun FieldCard(
                     Icon(
                         imageVector = Icons.Default.SportsSoccer,
                         contentDescription = "Field placeholder",
-                        modifier = Modifier.size(80.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        modifier = Modifier.size(70.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
                     )
                 }
 

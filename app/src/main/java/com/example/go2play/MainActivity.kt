@@ -33,7 +33,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.dark(
+                Color.BLACK
+            )
+        )
 
         SupabaseClient.initialize(applicationContext)
 
@@ -66,7 +74,7 @@ fun SystemBarsBackgroundsAndAppearance() {
     SideEffect {
         val controller = WindowCompat.getInsetsController(activity.window, view)
         controller.isAppearanceLightStatusBars = !isLightIcons // true = dark icons
-        controller.isAppearanceLightNavigationBars = !isLightIcons
+        controller.isAppearanceLightNavigationBars = true
     }
 
     // Draw a box behind the status bar area with same color as background
