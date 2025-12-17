@@ -154,7 +154,7 @@ fun HomeScreen(
                     .padding(16.dp),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 4.dp
@@ -171,15 +171,18 @@ fun HomeScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Welcome back,",
+                            fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onTertiary
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = profile?.username ?: "User",
                             style = MaterialTheme.typography.headlineMedium,
+                            fontSize = 23.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onTertiary
                         )
                     }
 
@@ -189,7 +192,7 @@ fun HomeScreen(
                             model = profile.avatarUrl,
                             contentDescription = "User Avatar",
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(66.dp)
                                 .clip(CircleShape)
                                 .border(
                                     3.dp,
@@ -206,7 +209,7 @@ fun HomeScreen(
                                 .background(MaterialTheme.colorScheme.surface)
                                 .border(
                                     3.dp,
-                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.secondary,
                                     CircleShape
                                 ),
                             contentAlignment = Alignment.Center
@@ -375,7 +378,7 @@ fun EnhancedActionButton(
     )
     Card(
         modifier = modifier
-            .aspectRatio(1f)
+            .height(110.dp)
             .scale(scale),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(

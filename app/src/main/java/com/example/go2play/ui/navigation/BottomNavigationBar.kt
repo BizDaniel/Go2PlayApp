@@ -1,6 +1,7 @@
 package com.example.go2play.ui.navigation
 
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
@@ -38,7 +39,7 @@ fun BottomNavigationBar(
         tonalElevation = 3.dp
     ) {
         NavigationBar(
-            modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
+            modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars).height(64.dp),
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             val items = listOf(
