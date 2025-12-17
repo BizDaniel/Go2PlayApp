@@ -16,55 +16,73 @@ import androidx.core.view.WindowCompat
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = FieldGreen80,
-    secondary = LineWhite80,
-    tertiary = GoalNet80,
-    background = Color(0xFF1A1C1A),
-    surface = Color(0xFF1F221F),
-    surfaceVariant = Color(0xFF2A3D2A),
-    surfaceContainer = Color(0xFF252D25),
-    surfaceContainerHigh = Color(0xFF2D352D),
-    surfaceContainerHighest = Color(0xFF353F35),
-    primaryContainer = Color(0xFF3D5A3D),
-    secondaryContainer = Color(0xFF4A6B4A),
-    tertiaryContainer = Color(0xFF5A7A5A),
-    onPrimary = Color(0xFF0D3D0D),
-    onSecondary = Color(0xFF2D3B2D),
-    onTertiary = Color(0xFF1A3D1A),
-    onBackground = Color(0xFFE1E3E1),
-    onSurface = Color(0xFFE1E3E1),
-    onSurfaceVariant = Color(0xFFC0CCC0),
-    onPrimaryContainer = Color(0xFFB8E6B8),
-    onSecondaryContainer = Color(0xFFC8F0C8),
-    onTertiaryContainer = Color(0xFFD0F5D0),
-    outline = Color(0xFF8A9A8A),
-    outlineVariant = Color(0xFF424F42)
+    primary = DarkPrimary,
+    onPrimary = DarkOnPrimary,
+    primaryContainer = Color(0xFF3B5F65),        // variante scura dell'azzurro
+    onPrimaryContainer = TrentinoSoft,
+
+    secondary = DarkSecondary,
+    onSecondary = DarkOnSecondary,
+    secondaryContainer = Color(0xFF4E5F28),      // verde lime molto scuro
+    onSecondaryContainer = TrentinoSoft,
+
+    tertiary = DarkTertiary,
+    onTertiary = DarkOnTertiary,
+    tertiaryContainer = Color(0xFF0F445E),       // blu scurissimo
+    onTertiaryContainer = TrentinoSoft,
+
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = Color(0xFF3E494A),          // grigio-azzurro scuro
+    onSurfaceVariant = TrentinoSoft,
+
+    surfaceContainer = Color(0xFF262B2C),
+    surfaceContainerHigh = Color(0xFF303536),
+    surfaceContainerHighest = Color(0xFF383E3F),
+
+    outline = Color(0xFF7E8C8E),                 // outline azzurro/neutral
+    outlineVariant = Color(0xFF414A4C),
+
+    error = Color(0xFFCF6679),                   // default Material
+    onError = Color.Black
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = FieldGreen40,
-    secondary = LineWhite40,
-    tertiary = GoalNet40,
-    background = Color(0xFFF8FBF8),
-    surface = Color(0xFFFAFDFA),
-    surfaceVariant = Color(0xFFE8F5E9),
-    surfaceContainer = Color(0xFFF1F8F1),
-    surfaceContainerHigh = Color(0xFFECF4EC),
-    surfaceContainerHighest = Color(0xFFE6F1E6),
-    primaryContainer = Color(0xFFC8E6C9),
-    secondaryContainer = Color(0xFFDCEDC8),
-    tertiaryContainer = Color(0xFFE8F5E9),
-    onPrimary = Color(0xFFFFFFFF),
-    onSecondary = Color(0xFFFFFFFF),
-    onTertiary = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF1A1C1A),
-    onSurface = Color(0xFF1A1C1A),
-    onSurfaceVariant = Color(0xFF3E4B3E),
-    onPrimaryContainer = Color(0xFF1B5E20),
-    onSecondaryContainer = Color(0xFF33691E),
-    onTertiaryContainer = Color(0xFF2E7D32),
-    outline = Color(0xFF6D7D6D),
-    outlineVariant = Color(0xFFC0D0C0)
+    primary = LightPrimary,
+    onPrimary = LightOnPrimary,
+    primaryContainer = Color(0xFFD0E8F4),        // blu chiarissimo
+    onPrimaryContainer = TrentinoBlue,
+
+    secondary = LightSecondary,
+    onSecondary = LightOnSecondary,
+    secondaryContainer = Color(0xFFE9F3D0),      // lime chiaro E9F3D0FF
+    onSecondaryContainer = TrentinoLime,
+
+    tertiary = LightTertiary,
+    onTertiary = LightOnTertiary,
+    tertiaryContainer = Color(0xFFCDE1E4),       // aqua chiarissimo
+    onTertiaryContainer = TrentinoAqua,
+
+    background = LightBackground,
+    onBackground = LightOnBackground,
+
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = TrentinoSoft,
+    onSurfaceVariant = TrentinoGrey,
+
+    surfaceContainer = Color(0xFFF1F7F7),
+    surfaceContainerHigh = Color(0xFFC3F6D2),
+    surfaceContainerHighest = Color(0xFFE4EDED),
+
+    outline = Color(0xFF7E9094),
+    outlineVariant = Color(0xFFC9D4D6),
+
+    error = Color(0xFFBA1A1A),
+    onError = Color.White
 )
 
 @Composable

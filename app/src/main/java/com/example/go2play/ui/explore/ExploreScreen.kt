@@ -124,7 +124,10 @@ fun ExploreScreen(
                                 if (state.selectedCapacity == 5) null else 5
                             )
                         },
-                        label = { Text("5 players") }
+                        label = { Text(
+                            text = "5 players",
+                            color = MaterialTheme.colorScheme.onBackground
+                        ) }
                     )
                 }
                 item {
@@ -135,7 +138,10 @@ fun ExploreScreen(
                                 if (state.selectedCapacity == 7) null else 7
                             )
                         },
-                        label = { Text("7 players") }
+                        label = { Text(
+                            text = "7 players",
+                            color = MaterialTheme.colorScheme.onBackground
+                        ) }
                     )
                 }
 
@@ -148,12 +154,16 @@ fun ExploreScreen(
                                 if (state.selectedIndoorFilter == true) null else true
                             )
                         },
-                        label = { Text("Indoor") },
+                        label = { Text(
+                            text = "Indoor",
+                            color = MaterialTheme.colorScheme.onBackground
+                        ) },
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Home,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.secondary
                             )
                         }
                     )
@@ -166,12 +176,16 @@ fun ExploreScreen(
                                 if (state.selectedIndoorFilter == false) null else false
                             )
                         },
-                        label = { Text("Outdoor") },
+                        label = { Text(
+                            text = "Outdoor",
+                            color = MaterialTheme.colorScheme.onBackground
+                        ) },
                         leadingIcon = {
                             Icon(
                                 Icons.Default.WbSunny,
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.secondary
                             )
                         }
                     )
@@ -187,10 +201,14 @@ fun ExploreScreen(
                             Icon(
                                 Icons.Default.Clear,
                                 contentDescription = "Clear filters",
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.secondary
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Clear")
+                            Text(
+                                text = "Clear",
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
                         }
                     }
                 }
@@ -246,7 +264,7 @@ fun FieldDetailDialog(
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)
             ) {
                 // Header con immagine
                 Box(
@@ -303,9 +321,9 @@ fun FieldDetailDialog(
                             .padding(12.dp),
                         shape = RoundedCornerShape(8.dp),
                         color = if (field.isIndoor)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
                             MaterialTheme.colorScheme.tertiaryContainer
+                        else
+                            MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -316,9 +334,9 @@ fun FieldDetailDialog(
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
                                 tint = if (field.isIndoor)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
                                     MaterialTheme.colorScheme.onTertiaryContainer
+                                else
+                                    MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
@@ -326,9 +344,9 @@ fun FieldDetailDialog(
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = if (field.isIndoor)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
                                     MaterialTheme.colorScheme.onTertiaryContainer
+                                else
+                                    MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
                     }
@@ -358,7 +376,7 @@ fun FieldDetailDialog(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = "Location",
                             modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.secondary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -398,7 +416,7 @@ fun FieldDetailDialog(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
                         )
                     ) {
                         Column(
@@ -437,6 +455,7 @@ fun FieldDetailDialog(
                 // Pulsante organizza evento
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     tonalElevation = 3.dp
                 ) {
                     Button(
@@ -445,7 +464,10 @@ fun FieldDetailDialog(
                             .fillMaxWidth()
                             .padding(20.dp)
                             .height(56.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Icon(
                             Icons.Default.Event,
@@ -551,9 +573,9 @@ fun FieldCard(
                         .padding(12.dp),
                     shape = RoundedCornerShape(8.dp),
                     color = if (field.isIndoor)
-                        MaterialTheme.colorScheme.primaryContainer
-                    else
                         MaterialTheme.colorScheme.tertiaryContainer
+                    else
+                        MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -564,18 +586,18 @@ fun FieldCard(
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = if (field.isIndoor)
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            else
                                 MaterialTheme.colorScheme.onTertiaryContainer
+                            else
+                                MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = if (field.isIndoor) "Indoor" else "Outdoor",
                             style = MaterialTheme.typography.labelSmall,
                             color = if (field.isIndoor)
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            else
                                 MaterialTheme.colorScheme.onTertiaryContainer
+                            else
+                                MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
