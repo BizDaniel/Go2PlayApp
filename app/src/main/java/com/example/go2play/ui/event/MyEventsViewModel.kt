@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.threeten.bp.LocalDate
 
 data class EventWithField(
     val event: Event,
@@ -19,11 +20,20 @@ data class EventWithField(
     val players: List<UserProfile> = emptyList()
 )
 
+enum class EventFilter{
+    UPCOMING,
+    PAST
+}
+
 data class MyEventsState(
     val isLoading: Boolean = false,
-    val events: List<EventWithField> = emptyList(),
+    val allEvents: List<EventWithField> = emptyList(),
+    val filteredEvents: List<EventWithField> = emptyList(),
+    val selectedFilter: EventFilter = EventFilter.UPCOMING,
     val error: String? = null,
-    val isLoadingPlayers: Boolean = false
+    val isLoadingPlayers: Boolean = false,
+    val upcomingCount: Int = 0,
+    val pastCount: Int = 0
 )
 
 class MyEventsViewModel(
@@ -62,9 +72,11 @@ class MyEventsViewModel(
 
                     _myEventsState.value = _myEventsState.value.copy(
                         isLoading = false,
-                        events = sortedEvents,
+                        allEvents = sortedEvents,
                         error = null
                     )
+
+                    applyFilter(_myEventsState.value.selectedFilter)
                 },
                 onFailure = { exception ->
                     _myEventsState.value = _myEventsState.value.copy(
@@ -76,12 +88,42 @@ class MyEventsViewModel(
         }
     }
 
+    fun setFilter(filter: EventFilter) {
+        _myEventsState.value = _myEventsState.value.copy(selectedFilter = filter)
+        applyFilter(filter)
+    }
+
+    private fun applyFilter(filter: EventFilter) {
+        val today = LocalDate.now()
+
+        val upcomingEvents = _myEventsState.value.allEvents.filter { eventWithField ->
+            val eventDate = LocalDate.parse(eventWithField.event.date)
+            !eventDate.isBefore(today)
+        }.sortedBy { it.event.date }
+
+        val pastEvents = _myEventsState.value.allEvents.filter { eventWithField ->
+            val eventDate = LocalDate.parse(eventWithField.event.date)
+            eventDate.isBefore(today)
+        }.sortedByDescending { it.event.date }
+
+        val filtered = when (filter) {
+            EventFilter.UPCOMING -> upcomingEvents
+            EventFilter.PAST -> pastEvents
+        }
+
+        _myEventsState.value = _myEventsState.value.copy(
+            filteredEvents = filtered,
+            upcomingCount = upcomingEvents.size,
+            pastCount = pastEvents.size
+        )
+    }
+
     fun loadEventPlayers(eventId: String) {
         viewModelScope.launch {
             _myEventsState.value = _myEventsState.value.copy(isLoadingPlayers = true)
 
             // Trova l'evento
-            val eventWithField = _myEventsState.value.events.find { it.event.id == eventId }
+            val eventWithField = _myEventsState.value.allEvents.find { it.event.id == eventId }
 
             if (eventWithField != null) {
                 val event = eventWithField.event
@@ -96,7 +138,7 @@ class MyEventsViewModel(
                 }
 
                 // Aggiorna l'evento con i giocatori caricati
-                val updatedEvents = _myEventsState.value.events.map {
+                val updatedAllEvents = _myEventsState.value.allEvents.map {
                     if (it.event.id == eventId) {
                         it.copy(players = players)
                     } else {
@@ -104,8 +146,17 @@ class MyEventsViewModel(
                     }
                 }
 
+                val updatedFilteredEvents = _myEventsState.value.filteredEvents.map {
+                    if(it.event.id == eventId) {
+                        it.copy(players = players)
+                    } else {
+                        it
+                    }
+                }
+
                 _myEventsState.value = _myEventsState.value.copy(
-                    events = updatedEvents,
+                    allEvents = updatedAllEvents,
+                    filteredEvents = updatedFilteredEvents,
                     isLoadingPlayers = false
                 )
             } else {

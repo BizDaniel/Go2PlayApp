@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -87,26 +88,128 @@ fun MyEventsScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-                state.events.isEmpty() -> {
+                state.allEvents.isEmpty() -> {
                     EmptyEventsView(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
                 else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    Column(
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        items(state.events) { eventWithField ->
-                            EventCard(
-                                event = eventWithField.event,
-                                field = eventWithField.field,
-                                onClick = { selectedEvent = eventWithField }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FilterButton(
+                                text = "Upcoming",
+                                count = state.upcomingCount,
+                                isSelected = state.selectedFilter == EventFilter.UPCOMING,
+                                onClick = { viewModel.setFilter(EventFilter.UPCOMING) },
+                                modifier = Modifier.weight(1f)
                             )
+                            FilterButton(
+                                text = "Past",
+                                count = state.pastCount,
+                                isSelected = state.selectedFilter == EventFilter.PAST,
+                                onClick = { viewModel.setFilter(EventFilter.PAST) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        if (state.filteredEvents.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.EventBusy,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(80.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = when (state.selectedFilter) {
+                                            EventFilter.UPCOMING -> "No upcoming events"
+                                            EventFilter.PAST -> "No past events"
+                                        },
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(state.filteredEvents) { eventWithField ->
+                                    EventCard(
+                                        event = eventWithField.event,
+                                        field = eventWithField.field,
+                                        onClick = { selectedEvent = eventWithField }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun FilterButton(
+    text: String,
+    count: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (isSelected)
+                MaterialTheme.colorScheme.onPrimary
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+        )
+        if (count > 0) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Surface(
+                shape = CircleShape,
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f)
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+            ) {
+                Text(
+                    text = count.toString(),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
