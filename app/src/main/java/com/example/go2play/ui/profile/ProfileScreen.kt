@@ -9,6 +9,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +28,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.go2play.ui.theme.ThemeManager
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +43,10 @@ fun ProfileScreen(
 
     val lifecycleOwner = LocalLifecycleOwner.current
     var hasNavigatedAway by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var showThemeMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.currentStateFlow.collect { state ->
@@ -71,7 +81,47 @@ fun ProfileScreen(
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp
                     )
-                }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { showThemeMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Theme options"
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showThemeMenu,
+                            onDismissRequest = { showThemeMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Light Mode") },
+                                onClick = {
+                                    coroutineScope.launch {
+                                        ThemeManager.setDarkMode(context, false)
+                                    }
+                                    showThemeMenu = false
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.LightMode, contentDescription = null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Dark Mode") },
+                                onClick = {
+                                    coroutineScope.launch {
+                                        ThemeManager.setDarkMode(context, true)
+                                    }
+                                    showThemeMenu = false
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.DarkMode, contentDescription = null)
+                                }
+                            )
+                        }
+                    }
+                },
             )
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
