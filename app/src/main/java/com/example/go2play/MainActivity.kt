@@ -20,6 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalView
@@ -28,6 +30,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.go2play.data.remote.SupabaseClient
 import com.example.go2play.ui.navigation.AppNavHost
 import com.example.go2play.ui.theme.Go2PlayTheme
+import com.example.go2play.ui.theme.ThemeManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,12 +49,13 @@ class MainActivity : ComponentActivity() {
         SupabaseClient.initialize(applicationContext)
 
         setContent {
+            val isDarkMode by ThemeManager.isDarkMode(this).collectAsState(initial = false)
+
             Go2PlayTheme(
+                darkTheme = isDarkMode,
                 dynamicColor = false,
             ) {
-
                 SystemBarsBackgroundsAndAppearance()
-
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

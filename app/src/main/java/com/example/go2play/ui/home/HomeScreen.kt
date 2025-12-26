@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -29,6 +30,9 @@ import coil.compose.AsyncImage
 import com.example.go2play.ui.finduser.UserDetailsDialog
 import com.example.go2play.ui.notifications.NotificationViewModel
 import com.example.go2play.ui.profile.ProfileViewModel
+import com.example.go2play.ui.theme.TrentinoAqua
+import com.example.go2play.ui.theme.TrentinoBlue
+import com.example.go2play.ui.theme.TrentinoLime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -86,6 +90,14 @@ fun HomeScreen(
             onDismiss = { showProfileDialog = false }
         )
     }
+
+    val headerGradient = Brush.verticalGradient(
+        colors = listOf(
+            TrentinoBlue,
+            TrentinoAqua,
+            TrentinoLime
+        )
+    )
 
     Scaffold(
         topBar = {
@@ -153,73 +165,73 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .padding(16.dp),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 4.dp
-                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 onClick = { showProfileDialog = true }
             ) {
-                Row(
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .background(headerGradient)
+                        .padding(20.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Welcome back,",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onTertiary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = profile?.username ?: "User",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontSize = 23.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onTertiary
-                        )
-                    }
-
-                    // Avatar dell'utente
-                    if (profile?.avatarUrl != null) {
-                        AsyncImage(
-                            model = profile.avatarUrl,
-                            contentDescription = "User Avatar",
-                            modifier = Modifier
-                                .size(66.dp)
-                                .clip(CircleShape)
-                                .border(
-                                    3.dp,
-                                    MaterialTheme.colorScheme.primary,
-                                    CircleShape
-                                ),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surface)
-                                .border(
-                                    3.dp,
-                                    MaterialTheme.colorScheme.secondary,
-                                    CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Default avatar",
-                                modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.onSurface
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Welcome back,",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onTertiary
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = profile?.username ?: "User",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontSize = 23.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiary
+                            )
+                        }
+
+                        // Avatar dell'utente
+                        if (profile?.avatarUrl != null) {
+                            AsyncImage(
+                                model = profile.avatarUrl,
+                                contentDescription = "User Avatar",
+                                modifier = Modifier
+                                    .size(66.dp)
+                                    .clip(CircleShape)
+                                    .border(
+                                        3.dp,
+                                        MaterialTheme.colorScheme.primary,
+                                        CircleShape
+                                    ),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(
+                                        3.dp,
+                                        MaterialTheme.colorScheme.secondary,
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Default avatar",
+                                    modifier = Modifier.size(32.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
                 }
@@ -397,14 +409,14 @@ fun EnhancedActionButton(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Surface(
                 shape = CircleShape,
                 color = color.copy(alpha = 0.2f),
-                modifier = Modifier.size(56.dp)
+                modifier = Modifier.size(52.dp)
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
@@ -413,17 +425,20 @@ fun EnhancedActionButton(
                     Icon(
                         imageVector = icon,
                         contentDescription = label,
-                        modifier = Modifier.size(28.dp),
+                        modifier = Modifier.size(26.dp),
                         tint = color
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = color
+                color = color,
+                maxLines = 2,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
