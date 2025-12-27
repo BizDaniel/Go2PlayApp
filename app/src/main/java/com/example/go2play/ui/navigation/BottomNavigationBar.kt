@@ -53,7 +53,7 @@ fun BottomNavigationBar(
                     icon = { Icon(item.icon, contentDescription = item.title) },
                     label = { Text(item.title) },
                     selected = selectedRoute == item.route,
-                    onClick = { onNavigate(item.route) }
+                    onClick = { onNavigate(item.route) },
                 )
             }
         }

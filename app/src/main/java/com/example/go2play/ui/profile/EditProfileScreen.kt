@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -39,18 +40,26 @@ fun EditProfileScreen(
     val context = LocalContext.current
 
     var username by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-    var level by remember { mutableStateOf("") }
-    var preferredRoles by remember { mutableStateOf("") }
+    var selectedAge by remember { mutableStateOf<Int?>(null) }
+    var selectedLevel by remember { mutableStateOf<String?>(null) }
+    var selectedRoles by remember { mutableStateOf<List<String?>>(emptyList()) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    var ageExpanded by remember { mutableStateOf(false) }
+    var levelExpanded by remember { mutableStateOf(false) }
+    var rolesExpanded by remember { mutableStateOf(false) }
+
+    val ageOptions = (10..90).toList()
+    val levelOptions = listOf("Beginner", "Intermediate", "Advanced")
+    val roleOptions = listOf("Goalkeeper", "Defender", "Midfielder", "Striker")
 
     // Inizializza i campi con i dati attuali
     LaunchedEffect(profile) {
         profile?.let {
             username = it.username
-            age = it.age?.toString() ?: ""
-            level = it.level ?: ""
-            preferredRoles = it.preferredRoles ?: ""
+            selectedAge = it.age
+            selectedLevel = it.level
+            selectedRoles = it.preferredRoles?.split(", ")?.filter { role -> role.isNotBlank() } ?: emptyList()
         }
     }
 
@@ -98,7 +107,7 @@ fun EditProfileScreen(
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -205,37 +214,140 @@ fun EditProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Età
-                OutlinedTextField(
-                    value = age,
-                    onValueChange = { age = it },
-                    label = { Text("Età") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                ExposedDropdownMenuBox(
+                    expanded = ageExpanded,
+                    onExpandedChange = { ageExpanded = !ageExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedAge?.toString() ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Age") },
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.ArrowDropDown,
+                                contentDescription = "Dropdown"
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = ageExpanded,
+                        onDismissRequest = { ageExpanded = false },
+                        modifier = Modifier.heightIn(max = 300.dp)
+                    ) {
+                        ageOptions.forEach { age ->
+                            DropdownMenuItem(
+                                text = { Text(age.toString()) },
+                                onClick = {
+                                    selectedAge = age
+                                    ageExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Livello
-                OutlinedTextField(
-                    value = level,
-                    onValueChange = { level = it },
-                    label = { Text("Livello (es. Principiante, Intermedio, Avanzato)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                ExposedDropdownMenuBox(
+                    expanded = levelExpanded,
+                    onExpandedChange = { levelExpanded = !levelExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedLevel ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Level") },
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.ArrowDropDown,
+                                contentDescription = "Dropdown"
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = levelExpanded,
+                        onDismissRequest = { levelExpanded = false }
+                    ) {
+                        levelOptions.forEach { level ->
+                            DropdownMenuItem(
+                                text = { Text(level) },
+                                onClick = {
+                                    selectedLevel = level
+                                    levelExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Ruoli preferiti
-                OutlinedTextField(
-                    value = preferredRoles,
-                    onValueChange = { preferredRoles = it },
-                    label = { Text("Ruoli preferiti") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 2,
-                    maxLines = 3
-                )
+                ExposedDropdownMenuBox(
+                    expanded = rolesExpanded,
+                    onExpandedChange = { rolesExpanded = !rolesExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = if (selectedRoles.isEmpty()) "" else selectedRoles.joinToString(", "),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Preferred Roles") },
+                        trailingIcon = {
+                            Icon(
+                                Icons.Default.ArrowDropDown,
+                                contentDescription = "Dropdown"
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        placeholder = { Text("Select roles") }
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = rolesExpanded,
+                        onDismissRequest = { rolesExpanded = false }
+                    ) {
+                        roleOptions.forEach { role ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(role)
+                                        if (selectedRoles.contains(role)) {
+                                            Icon(
+                                                imageVector = Icons.Default.Person,
+                                                contentDescription = "Selected",
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    selectedRoles = if (selectedRoles.contains(role)) {
+                                        selectedRoles - role
+                                    } else {
+                                        selectedRoles + role
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -244,9 +356,9 @@ fun EditProfileScreen(
                     onClick = {
                         viewModel.updateProfile(
                             username = username,
-                            age = age.toIntOrNull(),
-                            level = level.ifEmpty { null },
-                            preferredRoles = preferredRoles.ifEmpty { null },
+                            age = selectedAge,
+                            level = selectedLevel,
+                            preferredRoles = if (selectedRoles.isEmpty()) null else selectedRoles.joinToString(", "),
                             onUpdateSuccess = onNavigateBack
                         )
                     },
@@ -255,7 +367,7 @@ fun EditProfileScreen(
                         .height(50.dp),
                     enabled = username.isNotBlank() && !profileState.isLoading
                 ) {
-                    Text("Salva Modifiche")
+                    Text("Save Changes")
                 }
             }
         }
