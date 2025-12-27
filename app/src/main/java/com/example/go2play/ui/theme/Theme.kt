@@ -34,7 +34,7 @@ private val DarkColorScheme = darkColorScheme(
     background = DarkBackground,
     onBackground = DarkOnBackground,
 
-    surface = DarkSurface,
+    surface = DarkBackground,
     onSurface = DarkOnSurface,
     surfaceVariant = Color(0xFF3E494A),          // grigio-azzurro scuro
     onSurfaceVariant = TrentinoSoft,
