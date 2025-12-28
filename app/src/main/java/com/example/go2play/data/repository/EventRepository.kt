@@ -31,6 +31,32 @@ private data class EventInsertPayload(
     val currentPlayers: List<String>
 )
 
+@Serializable
+private data class UpdateEventPayload(
+    @SerialName("p_event_id")
+    val eventId: String,
+    @SerialName("p_user_id")
+    val userId: String,
+    @SerialName("p_date")
+    val date: String? = null,
+    @SerialName("p_time_slot")
+    val timeSlot: String? = null,
+    @SerialName("p_description")
+    val description: String? = null,
+    @SerialName("p_is_private")
+    val isPrivate: Boolean? = null,
+    @SerialName("p_current_players")
+    val currentPlayers: List<String>? = null
+)
+
+@Serializable
+private data class CancelEventPayload(
+    @SerialName("p_event_id")
+    val eventId: String,
+    @SerialName("p_user_id")
+    val userId: String
+)
+
 class EventRepository {
     private val client = SupabaseClient.client
 
@@ -169,5 +195,86 @@ class EventRepository {
     // Ottengo ID corrente utente
     fun getCurrentUserId(): String? {
         return client.auth.currentUserOrNull()?.id
+    }
+
+    suspend fun updateEvent(
+        eventId: String,
+        date: String? = null,
+        timeSlot: String? = null,
+        description: String? = null,
+        isPrivate: Boolean? = null,
+        currentPlayers: List<String>? = null
+    ): Result<Unit> {
+        return try {
+            val userId = getCurrentUserId()
+                ?: return Result.failure(Exception("User not authenticated"))
+
+            val payload = UpdateEventPayload(
+                eventId = eventId,
+                userId = userId,
+                date = date,
+                timeSlot = timeSlot,
+                description = description,
+                isPrivate = isPrivate,
+                currentPlayers = currentPlayers
+            )
+
+            client.postgrest.rpc(
+                "update_event",
+                parameters = mapOf(
+                    "p_event_id" to eventId,
+                    "p_user_id" to userId,
+                    "p_date" to date,
+                    "p_time_slot" to timeSlot,
+                    "p_description" to description,
+                    "p_is_private" to isPrivate,
+                    "p_current_players" to currentPlayers
+                )
+            )
+
+            Log.d("EventRepository", "Event updated successfully")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("EventRepository", "Error updating event", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun cancelEvent(eventId: String): Result<Unit> {
+        return try {
+            val userId = getCurrentUserId()
+                ?: return Result.failure(Exception("User not authenticated"))
+
+            client.postgrest.rpc(
+                "cancel_event",
+                parameters = mapOf(
+                    "p_event_id" to eventId,
+                    "p_user_id" to userId
+                )
+            )
+
+            Log.d("EventRepository", "Event cancelled successfully")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("EventRepository", "Error cancelling event", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun removePlayerFromEvent(eventId: String, playerId: String): Result<Unit> {
+        return try {
+            val event = getEventById(eventId).getOrNull()
+                ?: return Result.failure(Exception("Event not found"))
+
+            val updatedPlayers = event.currentPlayers.filter { it != playerId }
+
+            updateEvent(
+                eventId = eventId,
+                currentPlayers = updatedPlayers
+            )
+        } catch (e: Exception) {
+            Log.e("EventRepository", "Error removing player", e)
+            Result.failure(e)
+        }
     }
 }

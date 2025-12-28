@@ -36,7 +36,8 @@ import java.util.Locale
 @Composable
 fun MyEventsScreen(
     viewModel: MyEventsViewModel = viewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToEdit: (String) -> Unit = {}
 ) {
     val state by viewModel.myEventsState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -57,8 +58,15 @@ fun MyEventsScreen(
             field = eventWithField.field,
             players = eventWithField.players,
             isLoadingPlayers = state.isLoadingPlayers,
+            currentUserId = viewModel.getCurrentUserId(),
             onDismiss = { selectedEvent = null },
-            onLoadPlayers = { viewModel.loadEventPlayers(eventWithField.event.id) }
+            onLoadPlayers = { viewModel.loadEventPlayers(eventWithField.event.id) },
+            onEdit = if (viewModel.getCurrentUserId() == eventWithField.event.organizerId && !LocalDate.parse(eventWithField.event.date).isBefore(LocalDate.now())) {
+                {
+                    selectedEvent = null
+                    onNavigateToEdit(eventWithField.event.id)
+                }
+            } else null
         )
     }
 
@@ -359,8 +367,10 @@ fun EventDetailDialog(
     field: Field,
     players: List<UserProfile>,
     isLoadingPlayers: Boolean,
+    currentUserId: String?,
     onDismiss: () -> Unit,
-    onLoadPlayers: () -> Unit
+    onLoadPlayers: () -> Unit,
+    onEdit: (() -> Unit)? = null
 ) {
 
     // Carica i giocatori quando il dialog si apre
@@ -392,6 +402,20 @@ fun EventDetailDialog(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
+
+                    if (currentUserId == event.organizerId &&
+                        event.status != EventStatus.CANCELLED &&
+                        event.status != EventStatus.COMPLETED &&
+                        onEdit != null
+                    ) {
+                        IconButton(onClick = onEdit) {
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = "Edit",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
 
                     IconButton(onClick = onDismiss) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
