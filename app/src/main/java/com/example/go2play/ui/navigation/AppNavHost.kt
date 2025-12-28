@@ -24,6 +24,7 @@ import androidx.navigation.navArgument
 import com.example.go2play.ui.auth.AuthViewModel
 import com.example.go2play.ui.auth.LoginScreen
 import com.example.go2play.ui.auth.SignUpScreen
+import com.example.go2play.ui.event.EditEventScreen
 import com.example.go2play.ui.event.OrganizeEventScreen
 import com.example.go2play.ui.events.MyEventsScreen
 import com.example.go2play.ui.explore.ExploreScreen
@@ -52,6 +53,7 @@ sealed class Screen(val route: String) {
     object MyEvents : Screen("my_events")
     object FindMatch : Screen("find_match")
     object FindUsers : Screen("find_users")
+    object EditEvent : Screen("edit_event")
 }
 
 @Composable
@@ -196,7 +198,10 @@ fun AppNavHost(navController: NavHostController) {
         composable(Screen.MyEvents.route) {
             SimpleScaffold(navController, Screen.MyEvents.route) {
                 MyEventsScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { eventId ->
+                        navController.navigate(Screen.EditEvent.route + "/$eventId")
+                    }
                 )
             }
         }
@@ -214,6 +219,24 @@ fun AppNavHost(navController: NavHostController) {
                 FindUsersScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
+            }
+        }
+
+        composable(
+            route = Screen.EditEvent.route + "/{eventId}",
+            arguments = listOf(navArgument("eventId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val eventId = backStackEntry.arguments?.getString("eventId")
+
+            SimpleScaffold(navController, "edit_event") {
+                if (eventId != null) {
+                    EditEventScreen(
+                        eventId = eventId,
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                } else {
+                    navController.popBackStack()
+                }
             }
         }
     }

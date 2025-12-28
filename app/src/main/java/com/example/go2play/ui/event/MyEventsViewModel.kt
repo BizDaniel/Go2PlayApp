@@ -165,6 +165,10 @@ class MyEventsViewModel(
         }
     }
 
+    fun getCurrentUserId(): String? {
+        return eventRepository.getCurrentUserId()
+    }
+
     fun clearError() {
         _myEventsState.value = _myEventsState.value.copy(error = null)
     }
