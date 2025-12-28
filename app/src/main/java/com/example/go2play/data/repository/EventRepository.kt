@@ -221,15 +221,7 @@ class EventRepository {
 
             client.postgrest.rpc(
                 "update_event",
-                parameters = mapOf(
-                    "p_event_id" to eventId,
-                    "p_user_id" to userId,
-                    "p_date" to date,
-                    "p_time_slot" to timeSlot,
-                    "p_description" to description,
-                    "p_is_private" to isPrivate,
-                    "p_current_players" to currentPlayers
-                )
+                payload
             )
 
             Log.d("EventRepository", "Event updated successfully")
