@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 
 data class ProfileState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val isInitialLoad: Boolean = true,
     val profile: UserProfile? = null,
     val error: String? = null,
@@ -106,14 +107,30 @@ class ProfileViewModel(
 
     fun refreshProfile() {
         viewModelScope.launch {
-            val userId = repository.getCurrentUserId() ?: return@launch
-            val result = repository.getUserProfile(userId)
-            result.onSuccess { profile ->
-                _profileState.value = _profileState.value.copy(
-                    profile = profile,
-                    error = null
-                )
+            _profileState.value = _profileState.value.copy(isRefreshing = true, error = null)
+
+            val userId = repository.getCurrentUserId()
+            if (userId == null) {
+                _profileState.value = _profileState.value.copy(isRefreshing = false)
+                return@launch
             }
+
+            val result = repository.getUserProfile(userId)
+            result.fold(
+                onSuccess = { profile ->
+                    _profileState.value = _profileState.value.copy(
+                        isRefreshing = false,
+                        profile = profile,
+                        error = null
+                    )
+                },
+                onFailure = { exception ->
+                    _profileState.value = _profileState.value.copy(
+                        isRefreshing = false,
+                        error = exception.message ?: "Error refreshing profile"
+                    )
+                }
+            )
         }
     }
 

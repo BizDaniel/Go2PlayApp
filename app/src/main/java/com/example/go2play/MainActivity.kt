@@ -1,6 +1,7 @@
 package com.example.go2play
 
 import android.app.Activity
+import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity

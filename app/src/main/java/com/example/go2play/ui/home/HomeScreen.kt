@@ -2,6 +2,7 @@ package com.example.go2play.ui.home
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -21,12 +22,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.go2play.R
 import com.example.go2play.ui.finduser.UserDetailsDialog
 import com.example.go2play.ui.notifications.NotificationViewModel
 import com.example.go2play.ui.profile.ProfileViewModel
@@ -38,6 +41,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -98,6 +102,14 @@ fun HomeScreen(
             TrentinoLime
         )
     )
+
+    val isDay = remember(currentTime) { isDayTime() }
+
+    val headerBackgroundRes = if (isDay) {
+        R.drawable.sfondo_app_day
+    } else {
+        R.drawable.sfondo_app_night
+    }
 
     Scaffold(
         topBar = {
@@ -168,69 +180,83 @@ fun HomeScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 onClick = { showProfileDialog = true }
             ) {
-                Box(
-                    modifier = Modifier
-                        .background(headerGradient)
-                        .padding(20.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Welcome back,",
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onTertiary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = profile?.username ?: "User",
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontSize = 23.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiary
-                            )
-                        }
+                Box {
+                    Image(
+                        painter = painterResource(id = headerBackgroundRes),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
 
-                        // Avatar dell'utente
-                        if (profile?.avatarUrl != null) {
-                            AsyncImage(
-                                model = profile.avatarUrl,
-                                contentDescription = "User Avatar",
-                                modifier = Modifier
-                                    .size(66.dp)
-                                    .clip(CircleShape)
-                                    .border(
-                                        3.dp,
-                                        MaterialTheme.colorScheme.primary,
-                                        CircleShape
-                                    ),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surface)
-                                    .border(
-                                        3.dp,
-                                        MaterialTheme.colorScheme.secondary,
-                                        CircleShape
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Default avatar",
-                                    modifier = Modifier.size(32.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(Color.Black.copy(alpha = 0.25f))
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .padding(20.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Welcome back,",
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onTertiary
                                 )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = profile?.username ?: "User",
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontSize = 23.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onTertiary
+                                )
+                            }
+
+                            // Avatar dell'utente
+                            if (profile?.avatarUrl != null) {
+                                AsyncImage(
+                                    model = profile.avatarUrl,
+                                    contentDescription = "User Avatar",
+                                    modifier = Modifier
+                                        .size(66.dp)
+                                        .clip(CircleShape)
+                                        .border(
+                                            3.dp,
+                                            MaterialTheme.colorScheme.primary,
+                                            CircleShape
+                                        ),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surface)
+                                        .border(
+                                            3.dp,
+                                            MaterialTheme.colorScheme.secondary,
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = "Default avatar",
+                                        modifier = Modifier.size(32.dp),
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
                             }
                         }
                     }
@@ -583,4 +609,9 @@ fun getCurrentDateTime(): DateTimeInfo {
         dayOfWeek = dateFormat.format(now),
         time = timeFormat.format(now)
     )
+}
+
+fun isDayTime(): Boolean {
+    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    return hour in 6..17
 }

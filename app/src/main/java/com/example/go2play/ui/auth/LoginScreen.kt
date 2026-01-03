@@ -1,10 +1,15 @@
 package com.example.go2play.ui.auth
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Key
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,7 +38,11 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Login", style = MaterialTheme.typography.headlineLarge)
+            Text(
+                text ="Login",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold
+            )
 
             Spacer(Modifier.height(24.dp))
 
@@ -41,7 +50,11 @@ fun LoginScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(30.dp),
+                leadingIcon = {
+                    Icon(Icons.Default.Email, contentDescription = "Email")
+                }
             )
 
             Spacer(Modifier.height(16.dp))
@@ -50,8 +63,12 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Password") },
+                shape = RoundedCornerShape(30.dp),
                 visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = {
+                    Icon(Icons.Default.Key, contentDescription = "Password")
+                }
             )
 
             Spacer(Modifier.height(24.dp))
@@ -61,13 +78,13 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !authState.isLoading
             ) {
-                Text("Accedi")
+                Text("Sign In")
             }
 
             Spacer(Modifier.height(16.dp))
 
             TextButton(onClick = onNavigateToSignUp) {
-                Text("Non sei registrato? Crea un account")
+                Text("Not registered yet? Create an account")
             }
 
             authState.error?.let {

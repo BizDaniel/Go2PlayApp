@@ -42,7 +42,7 @@ fun MyGroupsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Groups") },
+                title = { Text("My Groups", fontWeight = FontWeight.Bold) },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

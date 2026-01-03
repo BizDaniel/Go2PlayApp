@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -29,6 +30,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.go2play.ui.theme.ThemeManager
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,154 +129,165 @@ fun ProfileScreen(
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isRefreshing = true),
+            onRefresh = { viewModel.refreshProfile() },
+            modifier = Modifier.fillMaxSize()
         ) {
-            when {
-                profileState.isInitialLoad && profileState.isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                profileState.error != null && profile == null -> {
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = profileState.error ?: "Unknown error",
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadProfile() }) {
-                            Text("Retry")
-                        }
-                    }
-                }
-                profile != null -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // Avatar
-                        if (profile.avatarUrl != null) {
-                            AsyncImage(
-                                model = profile.avatarUrl,
-                                contentDescription = "Avatar",
-                                modifier = Modifier
-                                    .size(120.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(120.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Default avatar",
-                                    modifier = Modifier.size(60.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "@${profile.username}",
-                            style = MaterialTheme.typography.headlineSmall
-                        )
-
-                        Text(
-                            text = profile.email,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        // Card con le informazioni
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                ProfileInfoRow("Age", profile.age?.toString() ?: "Not specified")
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                                ProfileInfoRow("Level", profile.level ?: "Not specified")
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                                ProfileInfoRow("Preferred Roles", profile.preferredRoles ?: "Not specified")
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Pulsanti
-                        Button(
-                            onClick = onNavigateToEdit,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp)
-                        ) {
-                            Text("Edit Profile")
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        OutlinedButton(
-                            onClick = onLogout,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error
-                            )
-                        ) {
-                            Text("Logout")
-                        }
-                    }
-                }
-            }
-            AnimatedVisibility(
-                visible = !profileState.isInitialLoad && profileState.isLoading && profile != null,
+            Box(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp),
-                enter = fadeIn(),
-                exit = fadeOut()
+                    .fillMaxSize()
+                    .padding(padding)
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    tonalElevation = 4.dp
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                when {
+                    profileState.isInitialLoad && profileState.isLoading -> {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
+                            modifier = Modifier.align(Alignment.Center)
                         )
-                        Text(
-                            text = "Updating...",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                    }
+                    profileState.error != null && profile == null -> {
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = profileState.error ?: "Unknown error",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { viewModel.loadProfile() }) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+                    profile != null -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Avatar
+                            if (profile.avatarUrl != null) {
+                                AsyncImage(
+                                    model = profile.avatarUrl,
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(CircleShape)
+                                        .border(
+                                            3.dp,
+                                            MaterialTheme.colorScheme.primary,
+                                            CircleShape
+                                        )
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(120.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = "Default avatar",
+                                        modifier = Modifier.size(60.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "@${profile.username}",
+                                style = MaterialTheme.typography.headlineSmall
+                            )
+
+                            Text(
+                                text = profile.email,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.height(32.dp))
+
+                            // Card con le informazioni
+                            Card(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp)
+                                ) {
+                                    ProfileInfoRow("Age", profile.age?.toString() ?: "Not specified")
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                    ProfileInfoRow("Level", profile.level ?: "Not specified")
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                    ProfileInfoRow("Preferred Roles", profile.preferredRoles ?: "Not specified")
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            // Pulsanti
+                            Button(
+                                onClick = onNavigateToEdit,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp)
+                            ) {
+                                Text("Edit Profile")
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            OutlinedButton(
+                                onClick = onLogout,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Text("Logout")
+                            }
+                        }
+                    }
+                }
+                AnimatedVisibility(
+                    visible = !profileState.isInitialLoad && profileState.isLoading && profile != null,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp),
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        tonalElevation = 4.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Text(
+                                text = "Updating...",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                 }
             }

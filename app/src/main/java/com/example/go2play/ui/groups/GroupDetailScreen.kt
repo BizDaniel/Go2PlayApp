@@ -161,7 +161,7 @@ fun GroupDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.group?.name ?: "Group Details") },
+                title = { Text(state.group?.name ?: "Group Details", fontWeight = FontWeight.Bold) },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -305,7 +305,7 @@ fun GroupDetailScreen(
                         if (state.isCreator) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
+                                color = MaterialTheme.colorScheme.secondaryContainer
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -315,13 +315,13 @@ fun GroupDetailScreen(
                                         Icons.Default.Star,
                                         contentDescription = "Creator",
                                         modifier = Modifier.size(16.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = "Group Creator",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
                                         fontWeight = FontWeight.Medium
                                     )
                                 }

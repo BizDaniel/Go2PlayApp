@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
@@ -146,7 +147,7 @@ fun EditEventScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit Event") },
+                title = { Text("Edit Event", fontWeight = FontWeight.Bold) },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -300,6 +301,10 @@ fun EditEventScreen(
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 3,
                             maxLines = 5,
+                            shape = RoundedCornerShape(30.dp),
+                            leadingIcon = {
+                                Icon(Icons.Default.Edit, contentDescription = "Description")
+                            },
                             placeholder = { Text("Add details about your match...") }
                         )
 

@@ -127,7 +127,7 @@ fun OrganizeEventScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Organize Event") },
+                title = { Text("Organize Event", fontWeight = FontWeight.Bold) },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -319,6 +319,7 @@ fun OrganizeEventScreen(
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 3,
                             maxLines = 5,
+                            shape = RoundedCornerShape(30.dp),
                             placeholder = { Text("Add details about your match...") }
                         )
 

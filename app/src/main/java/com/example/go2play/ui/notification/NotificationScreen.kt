@@ -44,7 +44,7 @@ fun NotificationScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Notifications")
+                    Text(text = "Notifications", fontWeight = FontWeight.Bold)
                 },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {

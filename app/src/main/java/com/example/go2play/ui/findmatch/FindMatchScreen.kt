@@ -75,7 +75,7 @@ fun FindMatchScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Find a Match") },
+                title = { Text("Find a Match", fontWeight = FontWeight.Bold) },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
