@@ -72,7 +72,7 @@ fun CreateGroupScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create a Group") },
+                title = { Text("Create a Group", fontWeight = FontWeight.Bold) },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -159,7 +159,11 @@ fun CreateGroupScreen(
                     onValueChange = { viewModel.updateGroupName(it) },
                     label = { Text("Group Name") },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(30.dp),
                     singleLine = true,
+                    leadingIcon = {
+                        Icon(Icons.Default.Edit, contentDescription = "Name")
+                    },
                     trailingIcon = {
                         when {
                             state.isCheckingName -> {
@@ -218,8 +222,12 @@ fun CreateGroupScreen(
                     onValueChange = { viewModel.updateGroupDescription(it) },
                     label = { Text("Description (optional)") },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(30.dp),
                     minLines = 3,
-                    maxLines = 5
+                    maxLines = 5,
+                    leadingIcon = {
+                        Icon(Icons.Default.Textsms, contentDescription = "Description")
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -256,6 +264,7 @@ fun CreateGroupScreen(
                     onValueChange = { viewModel.updateSearchQuery(it) },
                     label = { Text("Search users...") },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(30.dp),
                     singleLine = true,
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = "Search")

@@ -1,13 +1,18 @@
 package com.example.go2play.ui.auth
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,7 +51,11 @@ fun SignUpScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Sign Up", style = MaterialTheme.typography.headlineLarge)
+            Text(
+                text = "Sign Up",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold
+            )
 
             Spacer(Modifier.height(24.dp))
 
@@ -55,7 +64,11 @@ fun SignUpScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth()
+                shape = RoundedCornerShape(30.dp),
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = {
+                    Icon(Icons.Default.Email, contentDescription = "Email")
+                }
             )
 
             Spacer(Modifier.height(16.dp))
@@ -66,6 +79,7 @@ fun SignUpScreen(
                 onValueChange = { username = it },
                 label = { Text("Username") },
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(30.dp),
                 singleLine = true,
                 trailingIcon = {
                     when {
@@ -113,7 +127,10 @@ fun SignUpScreen(
                         }
                     }
                 },
-                isError = username.isNotBlank() && (username.length < 3 || authState.isUsernameAvailable == false)
+                isError = username.isNotBlank() && (username.length < 3 || authState.isUsernameAvailable == false),
+                leadingIcon = {
+                    Icon(Icons.Default.Person, contentDescription = "Username")
+                }
             )
 
             Spacer(Modifier.height(16.dp))
@@ -124,7 +141,11 @@ fun SignUpScreen(
                 onValueChange = { password = it },
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
+                shape = RoundedCornerShape(30.dp),
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = {
+                    Icon(Icons.Default.Key, contentDescription = "Password")
+                }
             )
 
             Spacer(Modifier.height(24.dp))

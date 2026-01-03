@@ -8,13 +8,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -103,7 +110,11 @@ fun EditProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Modifica Profilo") },
+                title = {
+                    Text(
+                        text = "Edit Profile",
+                        fontWeight = FontWeight.Bold
+                ) },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -196,7 +207,11 @@ fun EditProfileScreen(
                     onValueChange = { username = it },
                     label = { Text("Username") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    shape = RoundedCornerShape(30.dp),
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = "Username")
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -207,8 +222,12 @@ fun EditProfileScreen(
                     onValueChange = {},
                     label = { Text("Email") },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(30.dp),
                     enabled = false,
-                    singleLine = true
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(Icons.Default.Email, contentDescription = "Email")
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -223,6 +242,10 @@ fun EditProfileScreen(
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Age") },
+                        shape = RoundedCornerShape(30.dp),
+                        leadingIcon = {
+                            Icon(Icons.Default.Cake, contentDescription = "Age")
+                        },
                         trailingIcon = {
                             Icon(
                                 Icons.Default.ArrowDropDown,
@@ -262,6 +285,10 @@ fun EditProfileScreen(
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Level") },
+                        shape = RoundedCornerShape(30.dp),
+                        leadingIcon = {
+                            Icon(Icons.Default.Bolt, contentDescription = "Level")
+                        },
                         trailingIcon = {
                             Icon(
                                 Icons.Default.ArrowDropDown,
@@ -301,6 +328,10 @@ fun EditProfileScreen(
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Preferred Roles") },
+                        shape = RoundedCornerShape(30.dp),
+                        leadingIcon = {
+                            Icon(Icons.Default.SportsSoccer, contentDescription = "Roles")
+                        },
                         trailingIcon = {
                             Icon(
                                 Icons.Default.ArrowDropDown,

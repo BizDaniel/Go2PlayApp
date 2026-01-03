@@ -35,7 +35,10 @@ fun FindUsersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Find Players") },
+                title = { Text(
+                    text = "Find Players",
+                    fontWeight = FontWeight.Bold
+                ) },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

@@ -73,7 +73,7 @@ fun MyEventsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Events") },
+                title = { Text("My Events", fontWeight = FontWeight.Bold) },
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {

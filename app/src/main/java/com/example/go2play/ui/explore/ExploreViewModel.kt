@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 
 data class ExploreState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val fields: List<Field> = emptyList(),
     val filteredFields: List<Field> = emptyList(),
     val error: String? = null,
@@ -54,6 +55,31 @@ class ExploreViewModel(
                     _fieldState.value = _fieldState.value.copy(
                         isLoading = false,
                         error = exception.message ?: "Error loading fields"
+                    )
+                }
+            )
+        }
+    }
+
+    fun refreshFields() {
+        viewModelScope.launch {
+            _fieldState.value = _fieldState.value.copy(isRefreshing = true, error = null)
+
+            val result = repository.getAllFields()
+            result.fold(
+                onSuccess = { fields ->
+                    _fieldState.value = _fieldState.value.copy(
+                        isRefreshing = false,
+                        fields = fields,
+                        error = null
+                    )
+                    // Riapplica i filtri correnti sui nuovi dati
+                    applyFilters()
+                },
+                onFailure = { exception ->
+                    _fieldState.value = _fieldState.value.copy(
+                        isRefreshing = false,
+                        error = exception.message ?: "Error refreshing fields"
                     )
                 }
             )

@@ -28,6 +28,8 @@ import com.example.go2play.data.model.Field
 import com.example.go2play.data.model.SurfaceType
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.unit.sp
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +40,10 @@ fun ExploreScreen(
     val state by viewModel.fieldState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedField by remember { mutableStateOf<Field?>(null) }
+
+    val swipeRefreshState = rememberSwipeRefreshState(
+        isRefreshing = state.isRefreshing
+    )
 
     // Mostra errori
     LaunchedEffect(state.error) {
@@ -214,30 +220,36 @@ fun ExploreScreen(
                 }
             }
 
-            // Lista campetti
-            Box(modifier = Modifier.fillMaxSize()) {
-                when {
-                    state.isLoading -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-                    state.filteredFields.isEmpty() -> {
-                        EmptyFieldsView(
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-                    else -> {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(state.filteredFields) { field ->
-                                FieldCard(
-                                    field = field,
-                                    onClick = { selectedField = field }
-                                )
+            SwipeRefresh(
+                state = swipeRefreshState,
+                onRefresh = { viewModel.refreshFields() },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Lista campetti
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when {
+                        state.isLoading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                        state.filteredFields.isEmpty() -> {
+                            EmptyFieldsView(
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                        else -> {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(state.filteredFields) { field ->
+                                    FieldCard(
+                                        field = field,
+                                        onClick = { selectedField = field }
+                                    )
+                                }
                             }
                         }
                     }
