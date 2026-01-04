@@ -1,5 +1,6 @@
 package com.example.go2play.ui.event
 
+import android.widget.Toast
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
@@ -69,6 +70,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -90,6 +92,7 @@ fun OrganizeEventScreen(
 ) {
     val eventState by viewModel.eventState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(fieldId) {
         viewModel.loadField(fieldId)
@@ -368,7 +371,11 @@ fun OrganizeEventScreen(
 
                         // Pulsante crea evento
                         Button(
-                            onClick = { viewModel.createEvent(onNavigateBack) },
+                            onClick = {
+                                viewModel.createEvent {
+                                    Toast.makeText(context, "Event organized successfully!", Toast.LENGTH_SHORT).show()
+                                    onNavigateBack()
+                            } },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),

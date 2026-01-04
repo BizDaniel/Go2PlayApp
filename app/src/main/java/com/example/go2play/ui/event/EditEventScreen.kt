@@ -1,5 +1,6 @@
 package com.example.go2play.ui.event
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -80,6 +82,8 @@ fun EditEventScreen(
     val editState by viewModel.editEventState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showCancelDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
 
     LaunchedEffect(eventId) {
         viewModel.loadEvent(eventId)
@@ -347,7 +351,11 @@ fun EditEventScreen(
                         Spacer(modifier = Modifier.height(32.dp))
 
                         Button(
-                            onClick = { viewModel.updateEvent(onNavigateBack) },
+                            onClick = {
+                                viewModel.updateEvent {
+                                    Toast.makeText(context, "Event updated successfully!", Toast.LENGTH_SHORT).show()
+                                    onNavigateBack()
+                            } },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),

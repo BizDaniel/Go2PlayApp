@@ -1,6 +1,7 @@
 package com.example.go2play.ui.groups
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -332,9 +333,12 @@ fun CreateGroupScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Button(
-                        onClick = { viewModel.createGroup(
-                            onGroupCreated
-                        ) },
+                        onClick = {
+                            viewModel.createGroup {
+                                Toast.makeText(context, "Group created successfully!", Toast.LENGTH_SHORT).show()
+                                onGroupCreated()
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),

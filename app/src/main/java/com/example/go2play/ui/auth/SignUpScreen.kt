@@ -1,5 +1,6 @@
 package com.example.go2play.ui.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -28,6 +30,8 @@ fun SignUpScreen(
     var password by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
 
+    val context = LocalContext.current
+
     // Controlla disponibilità username quando cambia
     LaunchedEffect(username) {
         if (username.isNotBlank()) {
@@ -39,7 +43,27 @@ fun SignUpScreen(
 
     // Se registrazione ok → vai alla home
     LaunchedEffect(authState.isAuthenticated) {
-        if (authState.isAuthenticated) onSignUpSuccess()
+        if (authState.isAuthenticated) {
+            Toast.makeText(
+                context,
+                "Successfully signed up!",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            onSignUpSuccess()
+        }
+    }
+
+    LaunchedEffect(authState.error) {
+        authState.error?.let { message ->
+            Toast.makeText(
+                context,
+                message,
+                Toast.LENGTH_SHORT
+            ).show()
+
+            viewModel.clearError()
+        }
     }
 
     Scaffold { padding ->
