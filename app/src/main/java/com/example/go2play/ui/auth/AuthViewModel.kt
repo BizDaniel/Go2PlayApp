@@ -1,5 +1,7 @@
 package com.example.go2play.ui.auth
 
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.go2play.data.repository.AuthRepository
@@ -28,7 +30,6 @@ class AuthViewModel(
 
     private val _authState  = MutableStateFlow(AuthState())
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
-
     private var usernameCheckJob: Job? = null
 
     init {
@@ -146,10 +147,9 @@ class AuthViewModel(
                         error = null
                     )
                 },
-                onFailure = { exception ->
+                onFailure = {
                     _authState.value = _authState.value.copy(
-                        isLoading = false,
-                        error = exception.message ?: "Error during the log in"
+                        isLoading = false
                     )
                 }
             )
@@ -173,8 +173,7 @@ class AuthViewModel(
                 },
                 onFailure = { exception ->
                     _authState.value = _authState.value.copy(
-                        isLoading = false,
-                        error = exception.message ?: "Sign out error"
+                        isLoading = false
                     )
                 }
             )

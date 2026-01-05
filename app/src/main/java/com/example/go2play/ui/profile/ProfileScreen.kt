@@ -1,5 +1,6 @@
 package com.example.go2play.ui.profile
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -248,7 +249,10 @@ fun ProfileScreen(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             OutlinedButton(
-                                onClick = onLogout,
+                                onClick = {
+                                    Toast.makeText(context, "Successfully log out!", Toast.LENGTH_SHORT).show()
+                                    onLogout()
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(50.dp),

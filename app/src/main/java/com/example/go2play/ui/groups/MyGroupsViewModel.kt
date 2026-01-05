@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 data class MyGroupsState(
     val isLoading: Boolean = false,
     val groups: List<Group> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
 )
 
 class MyGroupsViewModel(
@@ -23,6 +23,10 @@ class MyGroupsViewModel(
     val groupState: StateFlow<MyGroupsState> = _groupState.asStateFlow()
 
     init {
+        loadGroups()
+    }
+
+    fun refreshGroups() {
         loadGroups()
     }
 

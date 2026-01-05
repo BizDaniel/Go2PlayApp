@@ -1,6 +1,7 @@
 package com.example.go2play.ui.groups
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.go2play.data.model.UserProfile
 import java.io.InputStream
+import kotlin.contracts.contract
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +62,7 @@ fun GroupDetailScreen(
 
                 bytes?.let { imageBytes ->
                     viewModel.uploadGroupImage(imageBytes)
+                    Toast.makeText(context, "Group image updated!", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 // Gestione errore
@@ -85,6 +88,7 @@ fun GroupDetailScreen(
                 Button(
                     onClick = {
                         viewModel.deleteGroup {
+                            Toast.makeText(context, "Group deleted!", Toast.LENGTH_SHORT).show()
                             showDeleteDialog = false
                             onNavigateBack()
                         }
@@ -109,11 +113,13 @@ fun GroupDetailScreen(
         AlertDialog(
             onDismissRequest = { showLeaveDialog = false },
             title = { Text("Leave Group") },
+            containerColor = MaterialTheme.colorScheme.surface,
             text = { Text("Are you sure you want to leave this group?") },
             confirmButton = {
                 Button(
                     onClick = {
                         viewModel.leaveGroup {
+                            Toast.makeText(context, "Leaved group!", Toast.LENGTH_SHORT).show()
                             showLeaveDialog = false
                             onNavigateBack()
                         }
@@ -140,6 +146,7 @@ fun GroupDetailScreen(
             onDismiss = { showEditDialog = false },
             onConfirm = { name, description ->
                 viewModel.updateGroup(name, description) {
+                    Toast.makeText(context, "Group edited successfully!", Toast.LENGTH_SHORT).show()
                     showEditDialog = false
                 }
             }
@@ -344,7 +351,10 @@ fun GroupDetailScreen(
                                 isCreator = member.id == state.group!!.creatorId,
                                 isGroupCreator = state.isCreator,
                                 onRemoveMember = if (state.isCreator && member.id != state.group!!.creatorId) {
-                                    { viewModel.removeMember(member.id) }
+                                    {
+                                        viewModel.removeMember(member.id)
+                                        Toast.makeText(context, "${member.username} removed", Toast.LENGTH_SHORT).show()
+                                    }
                                 } else null
                             )
                             Spacer(modifier = Modifier.height(8.dp))
@@ -355,7 +365,9 @@ fun GroupDetailScreen(
                         // Pulsante per lasciare il gruppo (solo per membri non creatori)
                         if (!state.isCreator) {
                             Button(
-                                onClick = { showLeaveDialog = true },
+                                onClick = {
+                                    showLeaveDialog = true
+                                    },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(50.dp),
@@ -487,7 +499,8 @@ fun EditGroupDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Group") },
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = { Text("Edit Group", fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 OutlinedTextField(
@@ -495,7 +508,11 @@ fun EditGroupDialog(
                     onValueChange = { name = it },
                     label = { Text("Group Name") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(30.dp),
+                    leadingIcon = {
+                        Icon(Icons.Default.Edit, contentDescription = "Name")
+                    },
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
@@ -504,13 +521,19 @@ fun EditGroupDialog(
                     label = { Text("Description") },
                     minLines = 3,
                     maxLines = 5,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(30.dp),
+                    leadingIcon = {
+                        Icon(Icons.Default.Textsms, contentDescription = "Description")
+                    }
                 )
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(name, description) },
+                onClick = {
+                    onConfirm(name, description)
+                },
                 enabled = name.isNotBlank()
             ) {
                 Text("Save")
@@ -534,14 +557,15 @@ fun AddMemberDialog(
     onAddMember: (UserProfile) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
@@ -562,6 +586,7 @@ fun AddMemberDialog(
                     onValueChange = onSearchQueryChange,
                     label = { Text("Search users...") },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(30.dp),
                     singleLine = true,
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = "Search")
@@ -601,7 +626,11 @@ fun AddMemberDialog(
                             searchResults.forEach { user ->
                                 UserSearchResultItem(
                                     user = user,
-                                    onAdd = { onAddMember(user) }
+                                    onAdd = {
+                                        onAddMember(user)
+                                        Toast.makeText(context, "${user.username} added to group!",
+                                            Toast.LENGTH_SHORT).show()
+                                    }
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                             }

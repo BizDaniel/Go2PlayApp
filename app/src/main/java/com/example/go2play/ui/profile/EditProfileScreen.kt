@@ -1,6 +1,7 @@
 package com.example.go2play.ui.profile
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -83,6 +84,7 @@ fun EditProfileScreen(
 
                 bytes?.let { imageBytes ->
                     viewModel.uploadAvatar(imageBytes)
+                    Toast.makeText(context, "Image updated!", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 // Gestione errore
@@ -392,6 +394,7 @@ fun EditProfileScreen(
                             preferredRoles = if (selectedRoles.isEmpty()) null else selectedRoles.joinToString(", "),
                             onUpdateSuccess = onNavigateBack
                         )
+                        Toast.makeText(context, "Profile edited successfully!", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
