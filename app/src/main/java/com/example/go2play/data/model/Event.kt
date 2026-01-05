@@ -24,7 +24,7 @@ data class Event(
     @SerialName("group_id")
     val groupId: String? = null,
     @SerialName("created_at")
-    val createdAt: String? = null
+    val createdAt: String? = null,
 )
 
 @Serializable

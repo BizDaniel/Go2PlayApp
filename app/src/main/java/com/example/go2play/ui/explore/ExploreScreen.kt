@@ -1,8 +1,11 @@
 package com.example.go2play.ui.explore
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -27,6 +30,7 @@ import coil.compose.AsyncImage
 import com.example.go2play.data.model.Field
 import com.example.go2play.data.model.SurfaceType
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -265,6 +269,7 @@ fun FieldDetailDialog(
     onDismiss: () -> Unit,
     onOrganizeEvent: () -> Unit
 ) {
+    val context = LocalContext.current
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -382,20 +387,42 @@ fun FieldDetailDialog(
 
                     // Indirizzo
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Top
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Location",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.secondary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = field.address,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Location",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.secondary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = field.address,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (field.lat != null && field.lng != null) {
+                            IconButton(
+                                onClick = {
+                                    val uri = Uri.parse("geo:${field.lat},${field.lng}?q=${field.lat},${field.lng}(${Uri.encode(field.name)})")
+                                    val intent = Intent(Intent.ACTION_VIEW, uri)
+                                    context.startActivity(intent)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Map,
+                                    contentDescription = "Open in Maps",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -748,4 +775,3 @@ fun getSurfaceTypeLabel(surfaceType: SurfaceType): String {
         SurfaceType.INDOOR_SYNTHETIC -> "Indoor Syn."
     }
 }
-

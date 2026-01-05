@@ -20,7 +20,9 @@ data class Field(
     @SerialName("image_url")
     val imageUrl: String? = null,
     @SerialName("created_at")
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    val lat: Double? = null,
+    val lng: Double? = null
 )
 
 @Serializable
