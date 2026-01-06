@@ -12,6 +12,7 @@ import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.repository.EventRepository
 import com.example.go2play.data.repository.FieldRepository
 import com.example.go2play.data.repository.GroupRepository
+import com.example.go2play.data.repository.NotificationRepository
 import com.example.go2play.data.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,6 +51,8 @@ class EditEventViewModel(
 
     private val _editEventState = MutableStateFlow(EditEventState())
     val editEventState: StateFlow<EditEventState> = _editEventState.asStateFlow()
+
+    private val notificationRepository = NotificationRepository()
 
     private val dateFormatter = org.threeten.bp.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
@@ -305,6 +308,7 @@ class EditEventViewModel(
 
     fun updateEvent(onSuccess: () -> Unit) {
         val event = _editEventState.value.event ?: return
+        val field = _editEventState.value.field ?: return
         val date = _editEventState.value.selectedDate
         val timeSlot = _editEventState.value.selectedTimeSlot
 
@@ -320,6 +324,9 @@ class EditEventViewModel(
 
             val playerIds = _editEventState.value.players.map { it.id }
 
+            val dateChanged = date.format(dateFormatter) != event.date
+            val timeChanged = timeSlot != event.timeSlot
+
             val result = eventRepository.updateEvent(
                 eventId = event.id,
                 date = date.format(dateFormatter),
@@ -331,6 +338,19 @@ class EditEventViewModel(
 
             result.fold(
                 onSuccess = {
+                    if (dateChanged || timeChanged) {
+                        val membersToNotify = playerIds.filter { it != event.organizerId }
+                        if (membersToNotify.isNotEmpty()) {
+                            notificationRepository.createEventUpdateNotification(
+                                userIds = membersToNotify,
+                                eventId = event.id,
+                                fieldName = field.name,
+                                newDate = date.format(dateFormatter),
+                                newTimeSlot = timeSlot
+                            )
+                        }
+                    }
+
                     _editEventState.value = _editEventState.value.copy(isUpdating = false)
                     onSuccess()
                 },
@@ -346,6 +366,7 @@ class EditEventViewModel(
 
     fun cancelEvent(onSuccess: () -> Unit) {
         val event = _editEventState.value.event ?: return
+        val field = _editEventState.value.field ?: return
 
         viewModelScope.launch {
             _editEventState.value = _editEventState.value.copy(isUpdating = true, error = null)
@@ -354,6 +375,16 @@ class EditEventViewModel(
 
             result.fold(
                 onSuccess = {
+                    val membersToNotify = event.currentPlayers.filter { it != event.organizerId }
+                    if (membersToNotify.isNotEmpty()) {
+                        notificationRepository.createEventCancelledNotification(
+                            userIds = membersToNotify,
+                            fieldName = field.name,
+                            eventDate = event.date,
+                            eventTimeSlot = event.timeSlot
+                        )
+                    }
+
                     _editEventState.value = _editEventState.value.copy(isUpdating = false)
                     onSuccess()
                 },

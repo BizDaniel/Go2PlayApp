@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class ExploreState(
     val isLoading: Boolean = false,
@@ -24,8 +25,8 @@ data class ExploreState(
     val isSearching: Boolean = false
 )
 
-class ExploreViewModel(
-    private val repository: FieldRepository = FieldRepository()
+class ExploreViewModel @Inject constructor(
+    private val repository: FieldRepository
 ) : ViewModel() {
 
     private val _fieldState = MutableStateFlow(ExploreState())
