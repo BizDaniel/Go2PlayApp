@@ -6,6 +6,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.go2play.data.model.Group
 import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.repository.GroupRepository
+import com.example.go2play.data.repository.NotificationRepository
+import com.example.go2play.data.repository.ProfileRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +39,8 @@ class GroupDetailViewModel(
 
     private var searchJob: Job? = null
 
+    private val notificationRepository = NotificationRepository()
+    private val profileRepository = ProfileRepository()
     fun loadGroup(groupId: String) {
         viewModelScope.launch {
             _detailGroupState.update { it.copy(isLoading = true) }
@@ -134,6 +138,15 @@ class GroupDetailViewModel(
                     _detailGroupState.value = _detailGroupState.value.copy(
                         group = currentGroup.copy(name = name, description = description)
                     )
+
+                    val memberIds = currentGroup.memberIDs.filter { it != currentGroup.creatorId }
+                    if (memberIds.isNotEmpty()) {
+                        notificationRepository.createGroupUpdateNotification(
+                            userIds = memberIds,
+                            groupId = currentGroup.id,
+                            groupName = name
+                        )
+                    }
                     onSuccess()
                 },
                 onFailure = { error ->
@@ -146,13 +159,21 @@ class GroupDetailViewModel(
     }
 
     fun deleteGroup(onSuccess: () -> Unit) {
-        val groupId = _detailGroupState.value.group?.id ?: return
+        val group = _detailGroupState.value.group ?: return
 
         viewModelScope.launch {
-            val result = repository.deleteGroup(groupId)
+            val result = repository.deleteGroup(group.id)
 
             result.fold(
                 onSuccess = {
+                    val memberIds = group.memberIDs.filter { it != group.creatorId }
+                    if (memberIds.isNotEmpty()) {
+                        notificationRepository.createGroupDeletedNotification(
+                            userIds = memberIds,
+                            groupName = group.name
+                        )
+                    }
+
                     onSuccess() // Naviga indietro
                 },
                 onFailure = { error ->
@@ -246,16 +267,25 @@ class GroupDetailViewModel(
     }
 
     fun addMember(userId: String) {
-        val groupId = _detailGroupState.value.group?.id ?: return
+        val group = _detailGroupState.value.group ?: return
 
         viewModelScope.launch {
             _detailGroupState.update { it.copy(isSearching = true) }
-            val result = repository.addMemberToGroup(groupId, userId)
+            val result = repository.addMemberToGroup(group.id, userId)
 
             result.fold(
                 onSuccess = {
+                    val creatorProfile = profileRepository.getUserProfile(group.creatorId).getOrNull()
+                    val creatorUsername = creatorProfile?.username ?: "Someone"
+
+                    notificationRepository.createGroupInviteNotification(
+                        userId = userId,
+                        groupId = group.id,
+                        groupName = group.name,
+                        inviterUsername = creatorUsername
+                    )
                     // Ricarica il gruppo per aggiornare la lista membri
-                    loadGroup(groupId)
+                    loadGroup(group.id)
 
                     _detailGroupState.update {
                         it.copy(
@@ -277,15 +307,19 @@ class GroupDetailViewModel(
     }
 
     fun removeMember(userId: String) {
-        val groupId = _detailGroupState.value.group?.id ?: return
+        val group = _detailGroupState.value.group ?: return
 
         viewModelScope.launch {
-            val result = repository.removeMemberFromGroup(groupId, userId)
+            val result = repository.removeMemberFromGroup(group.id, userId)
 
             result.fold(
                 onSuccess = {
+                    notificationRepository.createRemovedFromGroupNotification(
+                        userId = userId,
+                        groupName = group.name
+                    )
                     // Ricarica il gruppo per aggiornare la lista membri
-                    loadGroup(groupId)
+                    loadGroup(group.id)
                 },
                 onFailure = { error ->
                     _detailGroupState.value = _detailGroupState.value.copy(

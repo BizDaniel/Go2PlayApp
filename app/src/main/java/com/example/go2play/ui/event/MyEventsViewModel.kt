@@ -1,5 +1,11 @@
 package com.example.go2play.ui.events
 
+import android.app.Application
+import android.content.Context
+import android.util.Log
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.go2play.data.model.Event
@@ -12,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.threeten.bp.LocalDate
 
 data class EventWithField(
@@ -100,6 +107,7 @@ class MyEventsViewModel(
             val eventDate = LocalDate.parse(eventWithField.event.date)
             !eventDate.isBefore(today)
         }.sortedBy { it.event.date }
+
 
         val pastEvents = _myEventsState.value.allEvents.filter { eventWithField ->
             val eventDate = LocalDate.parse(eventWithField.event.date)
