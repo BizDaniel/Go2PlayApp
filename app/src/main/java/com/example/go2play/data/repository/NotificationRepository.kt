@@ -11,13 +11,14 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.Serializable
+import javax.inject.Inject
 
 @Serializable
 private data class UpdateNotificationStatus(
     val status: String
 )
 
-class NotificationRepository {
+class NotificationRepository @Inject constructor(){
     private val client = SupabaseClient.client
 
     // Ottieni tutte le notifiche per l'utente corrente

@@ -8,8 +8,9 @@ import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.storage.storage
 import io.github.jan.supabase.postgrest.from
 import java.util.UUID
+import javax.inject.Inject
 
-class ProfileRepository {
+class ProfileRepository @Inject constructor(){
     private val client = SupabaseClient.client
 
     // Funzione per avere il profilo di una persona
