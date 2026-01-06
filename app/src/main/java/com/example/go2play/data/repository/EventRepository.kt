@@ -10,6 +10,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import javax.inject.Inject
 
 @Serializable
 private data class EventInsertPayload(
@@ -57,7 +58,7 @@ private data class CancelEventPayload(
     val userId: String
 )
 
-class EventRepository {
+class EventRepository @Inject constructor(){
     private val client = SupabaseClient.client
 
     // Ottieni eventi per un campo in una data specifica

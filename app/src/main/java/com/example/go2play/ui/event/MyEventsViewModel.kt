@@ -1,11 +1,5 @@
 package com.example.go2play.ui.events
 
-import android.app.Application
-import android.content.Context
-import android.util.Log
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.state.updateAppWidgetState
-import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.go2play.data.model.Event
@@ -14,12 +8,14 @@ import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.repository.EventRepository
 import com.example.go2play.data.repository.FieldRepository
 import com.example.go2play.data.repository.ProfileRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.threeten.bp.LocalDate
+import javax.inject.Inject
 
 data class EventWithField(
     val event: Event,
@@ -42,11 +38,11 @@ data class MyEventsState(
     val upcomingCount: Int = 0,
     val pastCount: Int = 0
 )
-
-class MyEventsViewModel(
-    private val eventRepository: EventRepository = EventRepository(),
-    private val fieldRepository: FieldRepository = FieldRepository(),
-    private val profileRepository: ProfileRepository = ProfileRepository()
+@HiltViewModel
+class MyEventsViewModel @Inject constructor(
+    private val eventRepository: EventRepository,
+    private val fieldRepository: FieldRepository,
+    private val profileRepository: ProfileRepository
 ) : ViewModel() {
 
     private val _myEventsState = MutableStateFlow(MyEventsState())
