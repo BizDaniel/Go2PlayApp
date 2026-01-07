@@ -49,6 +49,12 @@ fun GroupDetailScreen(
         viewModel.loadGroup(groupId)
     }
 
+    LaunchedEffect(state.hasLeftGroup) {
+        if (state.hasLeftGroup) {
+            onNavigateBack()
+        }
+    }
+
     // Launcher per selezionare l'immagine
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()

@@ -27,7 +27,8 @@ data class GroupDetailState(
     val searchQuery: String = "",
     val isSearching: Boolean = false,
     val searchResults: List<UserProfile> = emptyList(),
-    val showAddMemberDialog: Boolean = false
+    val showAddMemberDialog: Boolean = false,
+    val hasLeftGroup: Boolean = false
 )
 
 class GroupDetailViewModel(
@@ -186,22 +187,28 @@ class GroupDetailViewModel(
     }
 
     fun leaveGroup(onSuccess: () -> Unit) {
-        val groupId = _detailGroupState.value.group?.id ?: return
+        val group = _detailGroupState.value.group ?: return
 
         viewModelScope.launch {
-            _detailGroupState.value = _detailGroupState.value.copy(isLeaving = true)
-            val result = repository.leaveGroup(groupId)
+            _detailGroupState.update { it.copy(isLeaving = true) }
+            val result = repository.leaveGroup(group.id)
 
             result.fold(
                 onSuccess = {
-                    _detailGroupState.value = _detailGroupState.value.copy(isLeaving = false)
-                    onSuccess() // Naviga indietro
+                    _detailGroupState.update {
+                        it.copy(
+                            isLeaving = false,
+                            hasLeftGroup = true
+                        )
+                    }
                 },
                 onFailure = { error ->
-                    _detailGroupState.value = _detailGroupState.value.copy(
-                        isLeaving = false,
-                        error = "Error leaving group: ${error.message}"
-                    )
+                    _detailGroupState.update {
+                        it.copy(
+                            isLeaving = false,
+                            error = "Error leaving group: ${error.message}"
+                        )
+                    }
                 }
             )
         }

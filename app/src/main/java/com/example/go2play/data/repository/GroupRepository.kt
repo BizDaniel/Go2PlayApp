@@ -8,6 +8,8 @@ import com.example.go2play.data.remote.SupabaseClient
 import kotlinx.serialization.Serializable
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.storage.storage
 import java.util.UUID
 import javax.inject.Inject
@@ -302,18 +304,11 @@ class GroupRepository @Inject constructor(){
                 return Result.failure(Exception("Creator cannot leave the group. Delete it instead."))
             }
 
-            // Rimuovi l'utente dalla lista dei membri
-            val updatedMemberIds = group.memberIDs.filter { it != currentUserId }
-
-            // Aggiorna il gruppo
-            client.from("groups")
-                .update(
-                    mapOf("member_ids" to updatedMemberIds)
-                ) {
-                    filter {
-                        eq("id", groupId)
-                    }
-                }
+            // Uso una funzione rpc al posto della '.update()' che usavo prima
+            client.postgrest.rpc(
+                function = "leave_group",
+                parameters = mapOf("group_id_param" to groupId)
+            )
 
             // Rimuovi il gruppo dal profilo dell'utente
             removeGroupFromUserProfiles(listOf(currentUserId), groupId)
