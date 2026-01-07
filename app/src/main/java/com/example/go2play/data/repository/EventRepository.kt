@@ -1,6 +1,9 @@
 package com.example.go2play.data.repository
 
 import android.util.Log
+import com.example.go2play.data.local.dao.EventDao
+import com.example.go2play.data.local.entity.toEntity
+import com.example.go2play.data.local.entity.toEvent
 import com.example.go2play.data.model.Event
 import com.example.go2play.data.model.EventCreate
 import com.example.go2play.data.remote.SupabaseClient
@@ -8,9 +11,11 @@ import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
+import javax.inject.Singleton
 
 @Serializable
 private data class EventInsertPayload(
@@ -58,7 +63,10 @@ private data class CancelEventPayload(
     val userId: String
 )
 
-class EventRepository @Inject constructor(){
+@Singleton
+class EventRepository @Inject constructor(
+    private val eventDao: EventDao
+){
     private val client = SupabaseClient.client
 
     // Ottieni eventi per un campo in una data specifica
@@ -171,26 +179,40 @@ class EventRepository @Inject constructor(){
         }
     }
 
-    suspend fun getUserEvents(): Result<List<Event>> {
+    suspend fun getUserEvents(forceRefresh: Boolean = false): Result<List<Event>> {
         return try {
             val userId = getCurrentUserId()
                 ?: return Result.failure(Exception("User not authenticated"))
 
-            // Cerca tutti gli eventi dove l'utente è presente in current_players
-            val events = client.from("events")
-                .select {
-                    filter {
-                        contains("current_players", listOf(userId))
-                    }
+            if(!forceRefresh) {
+                val cachedEvents = eventDao.getMyEvents().first()
+                if(cachedEvents.isNotEmpty()) {
+                    Log.d("EventRepository", "Returning ${cachedEvents.size} events from local cache")
+                    return Result.success(cachedEvents.map { it.toEvent() })
                 }
-                .decodeList<Event>()
+            }
+            // Cerca tutti gli eventi dove l'utente è presente in current_players
+            val events = fetchUserEventsFromNetwork(userId)
 
-            Log.d("EventRepository", "Found ${events.size} events for user $userId")
+            eventDao.refreshEvents(events.map { it.toEntity() })
+
             Result.success(events)
         } catch (e: Exception) {
             Log.e("EventRepository", "Error getting user events", e)
             Result.failure(e)
         }
+    }
+
+    private suspend fun fetchUserEventsFromNetwork(userId: String): List<Event> {
+        val events = client.from("events")
+            .select {
+                filter {
+                    contains("current_players", listOf(userId))
+                }
+            }
+            .decodeList<Event>()
+        Log.d("EventRepository", "Fetched ${events.size} events from network")
+        return events
     }
 
     // Ottengo ID corrente utente

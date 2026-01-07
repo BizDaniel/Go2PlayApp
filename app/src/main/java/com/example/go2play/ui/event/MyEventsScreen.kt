@@ -23,7 +23,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.glance.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.go2play.data.model.Event
 import com.example.go2play.data.model.EventStatus

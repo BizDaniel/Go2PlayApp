@@ -3,6 +3,7 @@ package com.example.go2play.di
 import android.content.Context
 import androidx.room.Room
 import com.example.go2play.data.local.AppDatabase
+import com.example.go2play.data.local.dao.EventDao
 import com.example.go2play.data.local.dao.FieldDao
 import dagger.Module
 import dagger.Provides
@@ -28,5 +29,10 @@ object DatabaseModule {
     @Provides
     fun provideFieldDao(database: AppDatabase): FieldDao {
         return database.fieldDao()
+    }
+
+    @Provides
+    fun provideEventDao(database: AppDatabase): EventDao {
+        return database.eventDao()
     }
 }
