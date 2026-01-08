@@ -5,14 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.go2play.data.model.Field
 import com.example.go2play.data.model.SurfaceType
 import com.example.go2play.data.repository.FieldRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class ExploreState(
     val isLoading: Boolean = false,
@@ -25,9 +23,9 @@ data class ExploreState(
     val selectedIndoorFilter: Boolean? = null,
     val isSearching: Boolean = false
 )
-@HiltViewModel
-class ExploreViewModel @Inject constructor(
-    private val repository: FieldRepository
+
+class ExploreViewModel(
+    private val repository: FieldRepository = FieldRepository()
 ) : ViewModel() {
 
     private val _fieldState = MutableStateFlow(ExploreState())

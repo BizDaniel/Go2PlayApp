@@ -4,8 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -89,6 +87,7 @@ dependencies {
 
     implementation("com.jakewharton.threetenabp:threetenabp:1.4.6")
 
+    // AGGIUNGI QUESTA RIGA (senza versione!)
     implementation("androidx.compose.foundation:foundation")
 
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
@@ -98,20 +97,4 @@ dependencies {
 
     implementation("androidx.compose.material3:material3:1.2.1")
     implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
-
-    // Widget
-    implementation("androidx.glance:glance-appwidget:1.1.0")
-    implementation("androidx.glance:glance-material3:1.1.0")
-
-    // Room
-    val room_version = "2.6.1"
-    implementation("androidx.room:room-runtime:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
-    ksp("androidx.room:room-compiler:$room_version")
-
-    // Hilt
-    implementation("com.google.dagger:hilt-android:2.51")
-    ksp("com.google.dagger:hilt-compiler:2.51")
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
-    implementation("com.google.dagger:hilt-android:2.51")
 }

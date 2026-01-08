@@ -75,7 +75,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.go2play.data.model.Group
 import com.example.go2play.data.model.SlotStatus
@@ -88,7 +87,7 @@ import org.threeten.bp.format.TextStyle
 @Composable
 fun OrganizeEventScreen(
     fieldId: String,
-    viewModel: OrganizeEventViewModel = hiltViewModel(),
+    viewModel: OrganizeEventViewModel = viewModel(),
     onNavigateBack: () -> Unit
 ) {
     val eventState by viewModel.eventState.collectAsStateWithLifecycle()

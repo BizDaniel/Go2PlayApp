@@ -32,9 +32,7 @@ import com.example.go2play.data.remote.SupabaseClient
 import com.example.go2play.ui.navigation.AppNavHost
 import com.example.go2play.ui.theme.Go2PlayTheme
 import com.example.go2play.ui.theme.ThemeManager
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

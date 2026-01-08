@@ -12,15 +12,12 @@ import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.repository.EventRepository
 import com.example.go2play.data.repository.FieldRepository
 import com.example.go2play.data.repository.GroupRepository
-import com.example.go2play.data.repository.NotificationRepository
 import com.example.go2play.data.repository.ProfileRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
-import javax.inject.Inject
 
 data class EditEventState(
     val isLoading: Boolean = false,
@@ -43,18 +40,16 @@ data class EditEventState(
     val isUpdating: Boolean = false,
     val canMakePublic: Boolean = false
 )
-@HiltViewModel
-class EditEventViewModel @Inject constructor(
-    private val eventRepository: EventRepository,
-    private val fieldRepository: FieldRepository,
-    private val profileRepository: ProfileRepository,
-    private val groupRepository: GroupRepository
+
+class EditEventViewModel(
+    private val eventRepository: EventRepository = EventRepository(),
+    private val fieldRepository: FieldRepository = FieldRepository(),
+    private val profileRepository: ProfileRepository = ProfileRepository(),
+    private val groupRepository: GroupRepository = GroupRepository()
 ): ViewModel() {
 
     private val _editEventState = MutableStateFlow(EditEventState())
     val editEventState: StateFlow<EditEventState> = _editEventState.asStateFlow()
-
-    private val notificationRepository = NotificationRepository()
 
     private val dateFormatter = org.threeten.bp.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
@@ -310,7 +305,6 @@ class EditEventViewModel @Inject constructor(
 
     fun updateEvent(onSuccess: () -> Unit) {
         val event = _editEventState.value.event ?: return
-        val field = _editEventState.value.field ?: return
         val date = _editEventState.value.selectedDate
         val timeSlot = _editEventState.value.selectedTimeSlot
 
@@ -326,9 +320,6 @@ class EditEventViewModel @Inject constructor(
 
             val playerIds = _editEventState.value.players.map { it.id }
 
-            val dateChanged = date.format(dateFormatter) != event.date
-            val timeChanged = timeSlot != event.timeSlot
-
             val result = eventRepository.updateEvent(
                 eventId = event.id,
                 date = date.format(dateFormatter),
@@ -340,19 +331,6 @@ class EditEventViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = {
-                    if (dateChanged || timeChanged) {
-                        val membersToNotify = playerIds.filter { it != event.organizerId }
-                        if (membersToNotify.isNotEmpty()) {
-                            notificationRepository.createEventUpdateNotification(
-                                userIds = membersToNotify,
-                                eventId = event.id,
-                                fieldName = field.name,
-                                newDate = date.format(dateFormatter),
-                                newTimeSlot = timeSlot
-                            )
-                        }
-                    }
-
                     _editEventState.value = _editEventState.value.copy(isUpdating = false)
                     onSuccess()
                 },
@@ -368,7 +346,6 @@ class EditEventViewModel @Inject constructor(
 
     fun cancelEvent(onSuccess: () -> Unit) {
         val event = _editEventState.value.event ?: return
-        val field = _editEventState.value.field ?: return
 
         viewModelScope.launch {
             _editEventState.value = _editEventState.value.copy(isUpdating = true, error = null)
@@ -377,16 +354,6 @@ class EditEventViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = {
-                    val membersToNotify = event.currentPlayers.filter { it != event.organizerId }
-                    if (membersToNotify.isNotEmpty()) {
-                        notificationRepository.createEventCancelledNotification(
-                            userIds = membersToNotify,
-                            fieldName = field.name,
-                            eventDate = event.date,
-                            eventTimeSlot = event.timeSlot
-                        )
-                    }
-
                     _editEventState.value = _editEventState.value.copy(isUpdating = false)
                     onSuccess()
                 },

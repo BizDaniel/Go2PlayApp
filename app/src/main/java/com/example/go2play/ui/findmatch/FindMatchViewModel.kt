@@ -8,13 +8,11 @@ import com.example.go2play.data.model.EventStatus
 import com.example.go2play.data.model.Field
 import com.example.go2play.data.repository.EventRepository
 import com.example.go2play.data.repository.FieldRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
-import javax.inject.Inject
 
 data class EventWithFieldInfo(
     val event: Event,
@@ -32,10 +30,10 @@ data class FindMatchState(
     val isJoining: Boolean = false,
     val currentUserId: String? = null
 )
-@HiltViewModel
-class FindMatchViewModel @Inject constructor(
-    private val eventRepository: EventRepository,
-    private val fieldRepository: FieldRepository
+
+class FindMatchViewModel(
+    private val eventRepository: EventRepository = EventRepository(),
+    private val fieldRepository: FieldRepository = FieldRepository()
 ) : ViewModel() {
 
     private val _findState = MutableStateFlow(FindMatchState())

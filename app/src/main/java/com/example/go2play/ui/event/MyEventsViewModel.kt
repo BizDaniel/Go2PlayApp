@@ -8,14 +8,11 @@ import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.repository.EventRepository
 import com.example.go2play.data.repository.FieldRepository
 import com.example.go2play.data.repository.ProfileRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.threeten.bp.LocalDate
-import javax.inject.Inject
 
 data class EventWithField(
     val event: Event,
@@ -38,11 +35,11 @@ data class MyEventsState(
     val upcomingCount: Int = 0,
     val pastCount: Int = 0
 )
-@HiltViewModel
-class MyEventsViewModel @Inject constructor(
-    private val eventRepository: EventRepository,
-    private val fieldRepository: FieldRepository,
-    private val profileRepository: ProfileRepository
+
+class MyEventsViewModel(
+    private val eventRepository: EventRepository = EventRepository(),
+    private val fieldRepository: FieldRepository = FieldRepository(),
+    private val profileRepository: ProfileRepository = ProfileRepository()
 ) : ViewModel() {
 
     private val _myEventsState = MutableStateFlow(MyEventsState())
@@ -103,7 +100,6 @@ class MyEventsViewModel @Inject constructor(
             val eventDate = LocalDate.parse(eventWithField.event.date)
             !eventDate.isBefore(today)
         }.sortedBy { it.event.date }
-
 
         val pastEvents = _myEventsState.value.allEvents.filter { eventWithField ->
             val eventDate = LocalDate.parse(eventWithField.event.date)

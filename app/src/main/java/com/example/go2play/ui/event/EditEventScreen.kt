@@ -66,7 +66,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -77,7 +76,7 @@ import io.ktor.websocket.Frame
 @Composable
 fun EditEventScreen(
     eventId: String,
-    viewModel: EditEventViewModel = hiltViewModel(),
+    viewModel: EditEventViewModel = viewModel(),
     onNavigateBack: () -> Unit
 ) {
     val editState by viewModel.editEventState.collectAsStateWithLifecycle()
@@ -156,7 +155,7 @@ fun EditEventScreen(
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {

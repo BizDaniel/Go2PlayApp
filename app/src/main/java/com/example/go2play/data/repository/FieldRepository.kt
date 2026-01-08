@@ -1,35 +1,22 @@
 package com.example.go2play.data.repository
 
 import android.util.Log
-import com.example.go2play.data.local.dao.FieldDao
-import com.example.go2play.data.local.entity.toEntity
-import com.example.go2play.data.local.entity.toField
 import com.example.go2play.data.model.Field
 import com.example.go2play.data.model.FieldCreate
 import com.example.go2play.data.remote.SupabaseClient
 import io.github.jan.supabase.postgrest.from
-import kotlinx.coroutines.flow.first
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class FieldRepository @Inject constructor(
-    private val fieldDao: FieldDao
-) {
-
+class FieldRepository {
     private val client = SupabaseClient.client
 
     // Ottieni tutti i campetti
     suspend fun getAllFields(): Result<List<Field>> {
         return try {
-            val cachedFields = fieldDao.getAllFields().first()
+            val fields = client.from("fields")
+                .select()
+                .decodeList<Field>()
 
-            if (cachedFields.isNotEmpty()) {
-                Result.success(cachedFields.map { it.toField() })
-            } else {
-                val fields = fetchAndCacheFields()
-                Result.success(fields)
-            }
+            Result.success(fields)
         } catch (e: Exception) {
             Log.e("FieldRepository", "Error getting fields", e)
             Result.failure(e)
@@ -127,11 +114,5 @@ class FieldRepository @Inject constructor(
             Log.e("FieldRepository", "Error getting fields by indoor", e)
             Result.failure(e)
         }
-    }
-
-    private suspend fun fetchAndCacheFields(): List<Field> {
-        val fields = client.from("fields").select().decodeList<Field>()
-        fieldDao.insertFields(fields.map { it.toEntity() })
-        return fields
     }
 }

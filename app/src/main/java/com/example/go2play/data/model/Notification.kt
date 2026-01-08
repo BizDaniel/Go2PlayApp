@@ -9,9 +9,7 @@ data class Notification(
     @SerialName("user_id")
     val userId: String,
     @SerialName("event_id")
-    val eventId: String? = null,
-    @SerialName("group_id")
-    val groupId: String? = null,
+    val eventId: String,
     val type: NotificationType,
     val title: String,
     val message: String,
@@ -25,9 +23,7 @@ data class Notification(
     @SerialName("field_name")
     val fieldName: String? = null,
     @SerialName("organizer_username")
-    val organizerUsername: String? = null,
-    @SerialName("group_name")
-    val groupName: String? = null
+    val organizerUsername: String? = null
 )
 
 @Serializable
@@ -40,18 +36,6 @@ enum class NotificationType {
 
     @SerialName("event_cancelled")
     EVENT_CANCELLED,
-
-    @SerialName("group_invite")
-    GROUP_INVITE,
-
-    @SerialName("group_update")
-    GROUP_UPDATE,
-
-    @SerialName("group_deleted")
-    GROUP_DELETED,
-
-    @SerialName("removed_from_group")
-    REMOVED_FROM_GROUP
 }
 
 @Serializable
@@ -74,9 +58,7 @@ data class NotificationCreate(
     @SerialName("user_id")
     val userId: String,
     @SerialName("event_id")
-    val eventId: String? = null,
-    @SerialName("group_id")
-    val groupId: String? = null,
+    val eventId: String,
     val type: NotificationType,
     val title: String,
     val message: String,
