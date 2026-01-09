@@ -201,6 +201,10 @@ fun NotificationCard(
                             NotificationType.EVENT_INVITE -> Icons.Default.GroupAdd
                             NotificationType.EVENT_UPDATE -> Icons.Default.Update
                             NotificationType.EVENT_CANCELLED -> Icons.Default.Cancel
+                            NotificationType.GROUP_INVITE -> Icons.Default.GroupAdd
+                            NotificationType.GROUP_UPDATE -> Icons.Default.Edit
+                            NotificationType.GROUP_DELETED -> Icons.Default.Delete
+                            NotificationType.REMOVED_FROM_GROUP -> Icons.Default.PersonRemove
                         },
                         contentDescription = null,
                         tint = when (notification.status) {
@@ -329,7 +333,7 @@ fun NotificationCard(
             }
 
             // Pulsanti Accetta/Rifiuta (solo per pending)
-            if (notification.status == NotificationStatus.PENDING && onAccept != null && onDecline != null) {
+            if (notification.status == NotificationStatus.PENDING && notification.type == NotificationType.EVENT_INVITE && onAccept != null && onDecline != null) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(
@@ -369,6 +373,27 @@ fun NotificationCard(
                             Text("Accept")
                         }
                     }
+                }
+            }
+
+            if (notification.groupName != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Groups,
+                        contentDescription = "Group",
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = notification.groupName!!,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
 
