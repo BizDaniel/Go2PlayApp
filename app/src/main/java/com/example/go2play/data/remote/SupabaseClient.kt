@@ -13,12 +13,13 @@ import io.github.jan.supabase.serializer.KotlinXSerializer
 import io.github.jan.supabase.storage.Storage
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import com.example.go2play.BuildConfig
+
 
 object SupabaseClient {
 
-    private const val SUPABASE_URL = "https://mhxxoaotwqsguotcpvyp.supabase.co"
-    private const val SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1oeHhvYW90d3FzZ3VvdGNwdnlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5ODU2NDgsImV4cCI6MjA3ODU2MTY0OH0.Un_whSuNXBlJkjzP741qcaQ_BvQhcM-Ruu0dZGH4Hfs"
-
+    private const val SUPABASE_URL = BuildConfig.SUPABASE_URL
+    private const val SUPABASE_KEY = BuildConfig.SUPABASE_KEY
     lateinit var client: io.github.jan.supabase.SupabaseClient
         private set
 
