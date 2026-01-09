@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     id("org.jetbrains.kotlin.plugin.serialization")
+
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 val localProperties = Properties()
@@ -121,4 +124,16 @@ dependencies {
 
     implementation("androidx.compose.material3:material3:1.2.1")
     implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
+
+    // Room
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
+
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.50")
+    ksp("com.google.dagger:hilt-compiler:2.50")
+
+    // Hilt Navigation Compose
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 }
