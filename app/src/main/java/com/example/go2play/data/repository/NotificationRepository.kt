@@ -115,7 +115,7 @@ class NotificationRepository {
     }
 
     // Accetta invito (aggiorna notifica e aggiunge utente all'evento)
-    suspend fun acceptEventInvite(notificationId: String, eventId: String, userId: String): Result<Unit> {
+    suspend fun acceptEventInvite(notificationId: String, eventId: String?, userId: String): Result<Unit> {
         return try {
             Log.d("NotificationRepository", "Calling RPC accept_event_invite for user $userId on event $eventId (Notification: $notificationId)")
 
@@ -209,6 +209,156 @@ class NotificationRepository {
             Result.success(notifications.size)
         } catch (e: Exception) {
             Log.e("NotificationRepository", "Error getting notification count", e)
+            Result.failure(e)
+        }
+    }
+
+    // Notifica per aggiunta a gruppo
+    suspend fun createGroupInviteNotification(
+        userId: String,
+        groupId: String,
+        groupName: String,
+        inviterUsername: String
+    ): Result<Unit> {
+        return try {
+            val notification = NotificationCreate(
+                userId = userId,
+                groupId = groupId,
+                type = NotificationType.GROUP_INVITE,
+                title = "Added to Group",
+                message = "$inviterUsername added you to \"$groupName\"",
+                status = NotificationStatus.READ
+            )
+
+            client.from("notifications").insert(notification)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("NotificationRepository", "Error creating group invite notification", e)
+            Result.failure(e)
+        }
+    }
+
+    // Notifica per modifica gruppo
+    suspend fun createGroupUpdateNotification(
+        userIds: List<String>,
+        groupId: String,
+        groupName: String
+    ): Result<Unit> {
+        return try {
+            userIds.forEach { userId ->
+                val notification = NotificationCreate(
+                    userId = userId,
+                    groupId = groupId,
+                    type = NotificationType.GROUP_UPDATE,
+                    title = "Group Updated",
+                    message = "The group \"$groupName\" has been updated",
+                    status = NotificationStatus.READ
+                )
+                client.from("notifications").insert(notification)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("NotificationRepository", "Error creating group update notifications", e)
+            Result.failure(e)
+        }
+    }
+
+    // Notifica per eliminazione gruppo
+    suspend fun createGroupDeletedNotification(
+        userIds: List<String>,
+        groupName: String
+    ): Result<Unit> {
+        return try {
+            userIds.forEach { userId ->
+                val notification = NotificationCreate(
+                    userId = userId,
+                    groupId = null,
+                    type = NotificationType.GROUP_DELETED,
+                    title = "Group Deleted",
+                    message = "The group \"$groupName\" has been deleted",
+                    status = NotificationStatus.READ
+                )
+                client.from("notifications").insert(notification)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("NotificationRepository", "Error creating group deleted notifications", e)
+            Result.failure(e)
+        }
+    }
+
+    // Notifica per rimozione da gruppo
+    suspend fun createRemovedFromGroupNotification(
+        userId: String,
+        groupName: String
+    ): Result<Unit> {
+        return try {
+            val notification = NotificationCreate(
+                userId = userId,
+                groupId = null,
+                type = NotificationType.REMOVED_FROM_GROUP,
+                title = "Removed from Group",
+                message = "You have been removed from \"$groupName\"",
+                status = NotificationStatus.READ
+            )
+
+            client.from("notifications").insert(notification)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("NotificationRepository", "Error creating removed from group notification", e)
+            Result.failure(e)
+        }
+    }
+
+    // Notifica per modifica evento
+    suspend fun createEventUpdateNotification(
+        userIds: List<String>,
+        eventId: String,
+        fieldName: String,
+        newDate: String,
+        newTimeSlot: String
+    ): Result<Unit> {
+        return try {
+            userIds.forEach { userId ->
+                val notification = NotificationCreate(
+                    userId = userId,
+                    eventId = eventId,
+                    type = NotificationType.EVENT_UPDATE,
+                    title = "Event Updated",
+                    message = "Event at $fieldName has been updated to $newDate at $newTimeSlot",
+                    status = NotificationStatus.READ
+                )
+                client.from("notifications").insert(notification)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("NotificationRepository", "Error creating event update notifications", e)
+            Result.failure(e)
+        }
+    }
+
+    // Notifica per cancellazione evento
+    suspend fun createEventCancelledNotification(
+        userIds: List<String>,
+        fieldName: String,
+        eventDate: String,
+        eventTimeSlot: String
+    ): Result<Unit> {
+        return try {
+            userIds.forEach { userId ->
+                val notification = NotificationCreate(
+                    userId = userId,
+                    eventId = null,
+                    type = NotificationType.EVENT_CANCELLED,
+                    title = "Event Cancelled",
+                    message = "The event at $fieldName on $eventDate at $eventTimeSlot has been cancelled",
+                    status = NotificationStatus.READ
+                )
+                client.from("notifications").insert(notification)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("NotificationRepository", "Error creating event cancelled notifications", e)
             Result.failure(e)
         }
     }
