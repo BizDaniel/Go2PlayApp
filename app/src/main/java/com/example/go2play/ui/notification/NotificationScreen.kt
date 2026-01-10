@@ -20,6 +20,7 @@ import com.example.go2play.data.model.NotificationStatus
 import com.example.go2play.data.model.NotificationType
 import org.threeten.bp.LocalDateTime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import org.threeten.bp.Duration
 import org.threeten.bp.format.DateTimeFormatter
 
@@ -49,7 +50,7 @@ fun NotificationScreen(
                 windowInsets = WindowInsets(0),
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {

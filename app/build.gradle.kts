@@ -112,6 +112,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("androidx.compose.material:material-icons-extended")
 
+    // ThreeTen (Date/Time)
     implementation("com.jakewharton.threetenabp:threetenabp:1.4.6")
 
     // AGGIUNGI QUESTA RIGA (senza versione!)
