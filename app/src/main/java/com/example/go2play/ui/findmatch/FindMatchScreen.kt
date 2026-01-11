@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.go2play.data.model.Event
@@ -28,7 +29,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FindMatchScreen(
-    viewModel: FindMatchViewModel = viewModel(),
+    viewModel: FindMatchViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
     val findState by viewModel.findState.collectAsStateWithLifecycle()

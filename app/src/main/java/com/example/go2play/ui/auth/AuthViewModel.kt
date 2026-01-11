@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import javax.inject.Inject
 
 data class AuthState(
     val isLoading: Boolean = false,
@@ -25,7 +26,7 @@ data class AuthState(
 )
 
 @HiltViewModel
-class AuthViewModel(
+class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val profileRepository: ProfileRepository
 ): ViewModel() {

@@ -20,6 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -28,7 +29,7 @@ import com.example.go2play.data.model.UserProfile
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FindUsersScreen(
-    viewModel: FindUsersViewModel = viewModel(),
+    viewModel: FindUsersViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()

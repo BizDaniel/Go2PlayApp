@@ -10,8 +10,9 @@ import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
 import java.util.UUID
+import javax.inject.Inject
 
-class GroupRepository {
+class GroupRepository @Inject constructor(){
     private val client = SupabaseClient.client
 
     // Cerca utenti per username

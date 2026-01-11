@@ -14,11 +14,13 @@ import com.example.go2play.data.repository.FieldRepository
 import com.example.go2play.data.repository.GroupRepository
 import com.example.go2play.data.repository.NotificationRepository
 import com.example.go2play.data.repository.ProfileRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
+import javax.inject.Inject
 
 data class EditEventState(
     val isLoading: Boolean = false,
@@ -42,10 +44,11 @@ data class EditEventState(
     val canMakePublic: Boolean = false
 )
 
-class EditEventViewModel(
-    private val eventRepository: EventRepository = EventRepository(),
-    private val fieldRepository: FieldRepository = FieldRepository(),
-    private val profileRepository: ProfileRepository = ProfileRepository(),
+@HiltViewModel
+class EditEventViewModel @Inject constructor(
+    private val eventRepository: EventRepository,
+    private val fieldRepository: FieldRepository,
+    private val profileRepository: ProfileRepository,
     private val groupRepository: GroupRepository = GroupRepository()
 ): ViewModel() {
 

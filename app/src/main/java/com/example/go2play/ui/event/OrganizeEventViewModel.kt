@@ -15,10 +15,12 @@ import com.example.go2play.data.repository.FieldRepository
 import com.example.go2play.data.repository.GroupRepository
 import com.example.go2play.data.repository.NotificationRepository
 import com.example.go2play.data.repository.ProfileRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class OrganizeEventState(
     val isLoading: Boolean = false,
@@ -37,10 +39,12 @@ data class OrganizeEventState(
     val isCreating: Boolean = false
 )
 
-class OrganizeEventViewModel(
-    private val eventRepository: EventRepository = EventRepository(),
-    private val fieldRepository: FieldRepository = FieldRepository(),
-    private val groupRepository: GroupRepository = GroupRepository()
+@HiltViewModel
+class OrganizeEventViewModel @Inject constructor(
+    private val eventRepository: EventRepository,
+    private val fieldRepository: FieldRepository,
+    private val groupRepository: GroupRepository = GroupRepository(),
+    private val profileRepository: ProfileRepository
 ): ViewModel() {
 
     private val _eventState = MutableStateFlow(OrganizeEventState())
@@ -255,7 +259,6 @@ class OrganizeEventViewModel(
     ) {
         val group = _eventState.value.selectedGroup ?: return
         val notificationRepository = NotificationRepository()
-        val profileRepository = ProfileRepository()
 
         // Ottieni il nome dell'organizzatore
         val organizerProfile = profileRepository.getUserProfile(organizerId).getOrNull()
