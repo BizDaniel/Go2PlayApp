@@ -3,18 +3,24 @@ package com.example.go2play.data.repository
 import com.example.go2play.data.remote.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.postgrest.classPropertyNames
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import javax.inject.Singleton
 
-
-class AuthRepository {
+@Singleton
+class AuthRepository @Inject constructor(
+    private val profileRepository: ProfileRepository,
+    private val fieldRepository: FieldRepository,
+    private val eventRepository: EventRepository
+){
 
     private val client = SupabaseClient.client
-    private val profileRepository = ProfileRepository()
     private var refreshJob: Job? = null
 
     // Registrazione con email, password e username
@@ -54,8 +60,9 @@ class AuthRepository {
     // Logout
     suspend fun signOut(): Result<Unit> {
         return try {
-
             stopAutoRefresh()
+
+            clearAllCache()
 
             client.auth.signOut()
             Result.success(Unit)
@@ -119,6 +126,18 @@ class AuthRepository {
     private fun stopAutoRefresh() {
         refreshJob?.cancel()
         refreshJob = null
+    }
+
+    /**
+     * Clear all the local cache
+     */
+    private suspend fun clearAllCache() {
+        try {
+            profileRepository.clearAllCache()
+            eventRepository.clearAllEventsCache()
+        } catch (e: Exception) {
+            android.util.Log.e("AuthRepository", "Error clearing cache", e)
+        }
     }
 }
 

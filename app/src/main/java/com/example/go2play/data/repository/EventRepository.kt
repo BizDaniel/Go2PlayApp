@@ -1,6 +1,9 @@
 package com.example.go2play.data.repository
 
 import android.util.Log
+import com.example.go2play.data.local.dao.EventDao
+import com.example.go2play.data.local.entity.toEntity
+import com.example.go2play.data.local.entity.toModel
 import com.example.go2play.data.model.Event
 import com.example.go2play.data.model.EventCreate
 import com.example.go2play.data.remote.SupabaseClient
@@ -8,8 +11,14 @@ import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.threeten.bp.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Serializable
 private data class EventInsertPayload(
@@ -57,12 +66,34 @@ private data class CancelEventPayload(
     val userId: String
 )
 
-class EventRepository {
+@Singleton
+class EventRepository @Inject constructor(
+    private val eventDao: EventDao
+){
     private val client = SupabaseClient.client
 
-    // Ottieni eventi per un campo in una data specifica
+    companion object {
+        private const val CACHE_VALIDITY_HOURS = 2L
+        private const val TAG = "EventRepository"
+    }
+
+    /**
+     * Get events by fields and date, check local cache at the beginning
+     */
     suspend fun getEventsByFieldAndDate(fieldId: String, date: String): Result<List<Event>> {
         return try {
+            val cachedEvents = eventDao.getEventsByFieldAndDate(fieldId, date)
+
+            if (cachedEvents.isNotEmpty()) {
+                val cacheAge = System.currentTimeMillis() - (cachedEvents.firstOrNull()?.cachedAt ?: 0)
+                val validityMs = CACHE_VALIDITY_HOURS * 60 * 60 * 1000
+
+                if (cacheAge < validityMs) {
+                    Log.d(TAG, "Using ${cachedEvents.size} cached events for field $fieldId on $date")
+                }
+            }
+
+            Log.d(TAG, "Fetching events for field $fieldId on $date from Supabase")
             val events = client.from("events")
                 .select {
                     filter {
@@ -71,20 +102,38 @@ class EventRepository {
                     }
                 }
                 .decodeList<Event>()
+
+            eventDao.insertAll(events.map { it.toEntity() })
+
             Result.success(events)
         } catch (e: Exception) {
             Log.e("EventRepository", "Error getting events by field and date", e)
+
+            // Fallback at expired cache
+            try {
+                val cachedEvents = eventDao.getEventsByFieldAndDate(fieldId, date)
+                if (cachedEvents.isNotEmpty()) {
+                    Log.d(TAG, "Using expired cache as fallback")
+                    return Result.success(cachedEvents.map { it.toModel() })
+                }
+            } catch (cacheError: Exception) {
+                Log.e(TAG, "Cache fallback failed", cacheError)
+            }
+
             Result.failure(e)
         }
     }
 
-    // Ottieni eventi per un campo in un range di date
+    /**
+     * Get event by field and date RANGE
+     */
     suspend fun getEventsByFieldAndDateRange(
         fieldId: String,
         startDate: String,
         endDate: String
     ): Result<List<Event>> {
         return try {
+            Log.d(TAG, "Fetching events for field $fieldId from $startDate to $endDate")
             val events = client.from("events")
                 .select {
                     filter {
@@ -95,6 +144,8 @@ class EventRepository {
                 }
                 .decodeList<Event>()
 
+            eventDao.insertAll(events.map { it.toEntity() })
+
             Result.success(events)
         } catch (e: Exception) {
             Log.e("EventRepository", "Error getting events by field and date range", e)
@@ -102,7 +153,9 @@ class EventRepository {
         }
     }
 
-    // Crea un nuovo evento
+    /**
+     * Create a new event
+     */
     suspend fun createEvent(eventCreate: EventCreate): Result<Event> {
         return try {
             val insertPayload = EventInsertPayload(
@@ -123,17 +176,29 @@ class EventRepository {
                 }
                 .decodeSingle<Event>()
 
-            Log.d("EventRepository", "Event created successfully. Organizer ${eventCreate.organizerId} included in players.")
+            eventDao.insert(createdEvent.toEntity())
+
+            Log.d(TAG, "Event created successfully. Organizer ${eventCreate.organizerId} included in players.")
             Result.success(createdEvent)
         } catch (e: Exception) {
-            Log.e("EventRepository", "Error creating event", e)
+            Log.e(TAG, "Error creating event", e)
             Result.failure(e)
         }
     }
 
-    // Ottieni evento per ID
+    /**
+     * Get a single event by ID
+     */
     suspend fun getEventById(eventId: String): Result<Event> {
         return try {
+            val cachedEvent = eventDao.getEventById(eventId).firstOrNull()
+
+            if (cachedEvent != null) {
+                Log.d(TAG, "Event $eventId found in cache")
+                return Result.success(cachedEvent.toModel())
+            }
+
+            Log.d(TAG, "Fetching event $eventId from Supabase")
             val event = client.from("events")
                 .select {
                     filter {
@@ -141,6 +206,9 @@ class EventRepository {
                     }
                 }
                 .decodeSingle<Event>()
+
+            eventDao.insert(event.toEntity())
+
             Result.success(event)
         } catch (e: Exception) {
             Log.e("EventRepository", "Error getting event", e)
@@ -148,9 +216,21 @@ class EventRepository {
         }
     }
 
+    /**
+     * Flow to observe an event
+     */
+    fun observeEvent(eventId: String): Flow<Event?> {
+        return eventDao.getEventById(eventId).map { entity ->
+            entity?.toModel()
+        }
+    }
+
+    /**
+     * Add player to event
+     */
     suspend fun addPlayerToEvent(eventId: String, userId: String): Result<Unit> {
         return try {
-            Log.d("EventRepository", "Calling RPC join_event for user $userId on event $eventId")
+            Log.d(TAG, "Calling RPC join_event for user $userId on event $eventId")
 
             // Chiama la funzione SQL creata sopra
             client.postgrest.rpc(
@@ -161,6 +241,10 @@ class EventRepository {
                 )
             )
 
+            eventDao.deleteById(eventId)
+
+            getEventById(eventId)
+
             Log.d("EventRepository", "Successfully joined event via RPC")
             Result.success(Unit)
         } catch (e: Exception) {
@@ -170,12 +254,27 @@ class EventRepository {
         }
     }
 
+    /**
+     * Get all the user's events with cache
+     */
     suspend fun getUserEvents(): Result<List<Event>> {
         return try {
             val userId = getCurrentUserId()
                 ?: return Result.failure(Exception("User not authenticated"))
 
-            // Cerca tutti gli eventi dove l'utente è presente in current_players
+            val cachedEvents = eventDao.getUserEventsOnce(userId)
+
+            if (cachedEvents.isNotEmpty()) {
+                val cacheAge = System.currentTimeMillis() - (cachedEvents.firstOrNull()?.cachedAt ?: 0)
+                val validityMs = CACHE_VALIDITY_HOURS * 60 * 60 * 1000
+
+                if (cacheAge < validityMs) {
+                    Log.d(TAG, "Using ${cachedEvents.size} cached user events")
+                    return Result.success(cachedEvents.map { it.toModel() })
+                }
+            }
+
+            Log.d(TAG, "Fetching user events from Supabase")
             val events = client.from("events")
                 .select {
                     filter {
@@ -184,11 +283,36 @@ class EventRepository {
                 }
                 .decodeList<Event>()
 
-            Log.d("EventRepository", "Found ${events.size} events for user $userId")
+            eventDao.insertAll(events.map { it.toEntity() })
+
+            Log.d(TAG, "Found ${events.size} events for user $userId")
             Result.success(events)
         } catch (e: Exception) {
-            Log.e("EventRepository", "Error getting user events", e)
+            Log.e(TAG, "Error getting user events", e)
+
+            try {
+                val userId = getCurrentUserId() ?: return Result.failure(e)
+                val cachedEvents = eventDao.getUserEventsOnce(userId)
+                if (cachedEvents.isNotEmpty()) {
+                    Log.d(TAG, "Using expired cache as fallback")
+                    return Result.success(cachedEvents.map { it.toModel() })
+                }
+            } catch (cacheError: Exception) {
+                Log.e(TAG, "Cache fallback failed", cacheError)
+            }
+
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Flow to observe user's events
+     */
+    fun observeUserEvents(): Flow<List<Event>> {
+        val userId = getCurrentUserId() ?: return kotlinx.coroutines.flow.flowOf(emptyList())
+
+        return eventDao.getUserEvents(userId).map { entities ->
+            entities.map { it.toModel() }
         }
     }
 
@@ -197,6 +321,9 @@ class EventRepository {
         return client.auth.currentUserOrNull()?.id
     }
 
+    /**
+     * Update an event
+     */
     suspend fun updateEvent(
         eventId: String,
         date: String? = null,
@@ -224,6 +351,10 @@ class EventRepository {
                 payload
             )
 
+            eventDao.deleteById(eventId)
+
+            getEventById(eventId)
+
             Log.d("EventRepository", "Event updated successfully")
             Result.success(Unit)
         } catch (e: Exception) {
@@ -232,6 +363,9 @@ class EventRepository {
         }
     }
 
+    /**
+     * Delete an event
+     */
     suspend fun cancelEvent(eventId: String): Result<Unit> {
         return try {
             val userId = getCurrentUserId()
@@ -245,6 +379,11 @@ class EventRepository {
                 )
             )
 
+            val cachedEvent = eventDao.getEventByIdOnce(eventId)
+            if (cachedEvent != null) {
+                eventDao.updateStatus(eventId, "CANCELLED")
+            }
+
             Log.d("EventRepository", "Event cancelled successfully")
             Result.success(Unit)
         } catch (e: Exception) {
@@ -253,6 +392,9 @@ class EventRepository {
         }
     }
 
+    /**
+     * Remove a Player from an event
+     */
     suspend fun removePlayerFromEvent(eventId: String, playerId: String): Result<Unit> {
         return try {
             val event = getEventById(eventId).getOrNull()
@@ -269,4 +411,130 @@ class EventRepository {
             Result.failure(e)
         }
     }
+
+    /**
+     * Clean Old Events from cache
+     */
+    suspend fun cleanOldEvents() {
+        try {
+            val sevenDaysAgo = LocalDate.now().minusDays(7).toString()
+            eventDao.deleteEventsBeforeDate(sevenDaysAgo)
+            Log.d(TAG, "Cleaned events before $sevenDaysAgo")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error cleaning old events", e)
+        }
+    }
+
+    /**
+     * Clean old cancelled events
+     */
+    suspend fun cleanCancelledEvents() {
+        try {
+            val oneDayAgo = System.currentTimeMillis() - (24 * 60 * 60 * 1000)
+            eventDao.deleteCancelledEventsBefore(oneDayAgo)
+            Log.d(TAG, "Cleaned cancelled events")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error cleaning cancelled events", e)
+        }
+    }
+
+    /**
+     * Invalidate cache for a specific event
+     */
+    suspend fun invalidateEventCache(eventId: String) {
+        try {
+            eventDao.deleteById(eventId)
+            Log.d(TAG, "Cache invalidated for event $eventId")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error invalidating event cache", e)
+        }
+    }
+
+    /**
+     * Invalidate cache of user's events
+     */
+    suspend fun invalidateUserEventsCache() {
+        try {
+            val userId = getCurrentUserId() ?: return
+            eventDao.deleteUserEvents(userId)
+            Log.d(TAG, "User events cache invalidated")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error invalidating user events cache", e)
+        }
+    }
+
+    /**
+     * Clean all the event's cache
+     */
+    suspend fun clearAllEventsCache() {
+        try {
+            eventDao.deleteAll()
+            Log.d(TAG, "All events cache cleared")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error clearing all events cache", e)
+        }
+    }
+
+    /**
+     * Force user's events refresh
+     */
+    suspend fun forceRefreshUserEvents(): Result<List<Event>> {
+        val userId = getCurrentUserId()
+            ?: return Result.failure(Exception("User not authenticated"))
+
+        return try {
+            Log.d(TAG, "Force refreshing user events")
+
+            // Elimina cache
+            eventDao.deleteUserEvents(userId)
+
+            // Fetch da Supabase
+            val events = client.from("events")
+                .select {
+                    filter {
+                        contains("current_players", listOf(userId))
+                    }
+                }
+                .decodeList<Event>()
+
+            // Salva in cache
+            eventDao.insertAll(events.map { it.toEntity() })
+
+            Log.d(TAG, "Force refresh completed: ${events.size} events")
+            Result.success(events)
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Error force refreshing user events", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get info about the cache
+     */
+    suspend fun getCacheInfo(userId: String): EventCacheInfo {
+        return try {
+            val userEventCount = eventDao.countUserEvents(userId)
+            val today = LocalDate.now().toString()
+            val publicEventCount = eventDao.countAvailablePublicEvents(today)
+            val latestCache = eventDao.getLatestCacheTime() ?: 0L
+            val ageHours = (System.currentTimeMillis() - latestCache) / (60 * 60 * 1000)
+
+            EventCacheInfo(
+                userEventCount = userEventCount,
+                publicEventCount = publicEventCount,
+                ageHours = ageHours,
+                isValid = ageHours < CACHE_VALIDITY_HOURS
+            )
+        } catch (e: Exception) {
+            EventCacheInfo(0, 0, 0, false)
+        }
+    }
 }
+
+data class EventCacheInfo(
+    val userEventCount: Int,
+    val publicEventCount: Int,
+    val ageHours: Long,
+    val isValid: Boolean
+)
