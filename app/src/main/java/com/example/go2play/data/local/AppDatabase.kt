@@ -15,7 +15,7 @@ import com.example.go2play.data.local.entity.UserProfileEntity
         EventEntity::class,
         UserProfileEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase: RoomDatabase() {
