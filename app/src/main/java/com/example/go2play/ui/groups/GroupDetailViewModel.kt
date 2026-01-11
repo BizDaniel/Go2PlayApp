@@ -8,6 +8,7 @@ import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.repository.GroupRepository
 import com.example.go2play.data.repository.NotificationRepository
 import com.example.go2play.data.repository.ProfileRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class GroupDetailState(
     val isLoading: Boolean = false,
@@ -30,8 +32,10 @@ data class GroupDetailState(
     val showAddMemberDialog: Boolean = false
 )
 
-class GroupDetailViewModel(
-    private val repository: GroupRepository = GroupRepository()
+@HiltViewModel
+class GroupDetailViewModel @Inject constructor(
+    private val repository: GroupRepository = GroupRepository(),
+    private val profileRepository: ProfileRepository
 ): ViewModel() {
 
     private val _detailGroupState = MutableStateFlow(GroupDetailState())
@@ -40,7 +44,6 @@ class GroupDetailViewModel(
     private var searchJob: Job? = null
 
     private val notificationRepository = NotificationRepository()
-    private val profileRepository = ProfileRepository()
 
     fun loadGroup(groupId: String) {
         viewModelScope.launch {

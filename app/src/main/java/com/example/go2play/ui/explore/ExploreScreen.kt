@@ -32,13 +32,14 @@ import com.example.go2play.data.model.SurfaceType
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExploreScreen(
-    viewModel: ExploreViewModel = viewModel(),
+    viewModel: ExploreViewModel = hiltViewModel(),
     onFieldClick: (Field) -> Unit = {}
 ) {
     val state by viewModel.fieldState.collectAsStateWithLifecycle()

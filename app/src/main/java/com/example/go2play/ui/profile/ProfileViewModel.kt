@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import com.example.go2play.data.repository.ProfileRepository
 import androidx.lifecycle.viewModelScope
 import com.example.go2play.data.model.UserProfile
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class ProfileState(
     val isLoading: Boolean = false,
@@ -19,8 +21,9 @@ data class ProfileState(
     val uploadSuccess: Boolean = false
 )
 
-class ProfileViewModel(
-    private val repository: ProfileRepository = ProfileRepository()
+@HiltViewModel
+class ProfileViewModel @Inject constructor(
+    private val repository: ProfileRepository
 ): ViewModel() {
     private val _profileState = MutableStateFlow(ProfileState())
     val profileState: StateFlow<ProfileState> = _profileState.asStateFlow()

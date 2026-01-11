@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -34,7 +35,7 @@ import kotlin.contracts.contract
 @Composable
 fun GroupDetailScreen(
     groupId: String,
-    viewModel: GroupDetailViewModel = viewModel(),
+    viewModel: GroupDetailViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
     val state by viewModel.detailGroupState.collectAsStateWithLifecycle()

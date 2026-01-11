@@ -4,12 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.go2play.data.model.UserProfile
 import com.example.go2play.data.repository.ProfileRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import javax.inject.Inject
 
 data class FindUsersState(
     val isLoading: Boolean = false,
@@ -21,8 +23,9 @@ data class FindUsersState(
     val showUserDialog: Boolean = false
 )
 
-class FindUsersViewModel(
-    private val repository: ProfileRepository = ProfileRepository()
+@HiltViewModel
+class FindUsersViewModel @Inject constructor(
+    private val repository: ProfileRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(FindUsersState())

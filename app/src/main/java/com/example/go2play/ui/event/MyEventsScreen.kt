@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -36,7 +37,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyEventsScreen(
-    viewModel: MyEventsViewModel = viewModel(),
+    viewModel: MyEventsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit = {}
 ) {
