@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.go2play.data.repository.AuthRepository
 import com.example.go2play.data.repository.ProfileRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,9 +24,10 @@ data class AuthState(
     val isCheckingSession: Boolean = true
 )
 
+@HiltViewModel
 class AuthViewModel(
-    private val authRepository: AuthRepository = AuthRepository(),
-    private val profileRepository: ProfileRepository = ProfileRepository()
+    private val authRepository: AuthRepository,
+    private val profileRepository: ProfileRepository
 ): ViewModel() {
 
     private val _authState  = MutableStateFlow(AuthState())
